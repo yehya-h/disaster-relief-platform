@@ -57,6 +57,7 @@ def analyze_image():
     # """
 
     instructions = """
+    You are an intelligent disaster classification agent.
     Here is an image to analyze.
     Task: Analyze the image and return only a JSON object with these fields:
     - disaster_probability (float 0.0–1.0): confidence score
@@ -64,8 +65,8 @@ def analyze_image():
     - disaster_severity (string): Low | Medium | High (based solely on human impact)
     - reasoning (string): one-sentence rationale referencing people-risk factors, also the reasoning of the generated probability
 
-    IMPORTANT: Do not include any text outside the JSON object.
-    NOTE: Compare actual result with the type and severity provided by the user.
+    IMPORTANT: Respond ONLY with the JSON object, no markdown, no commentary, no preface, no trailing notes.
+    Additionally, compare the detected type and severity with the user-provided type and severity. If they significantly differ, mention that in the reasoning.
 
     —Definition of Incident—
     An incident is any unplanned hazardous event that poses a threat to people, property, or the environment. Look for these visual cues:
@@ -136,7 +137,7 @@ def analyze_image():
         return jsonify({"error": "Output format invalid", "details": e.errors()}), 500
 
     print(image_result)
-    return jsonify(image_result.dict())
+    return jsonify(image_result.model_dump())
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
