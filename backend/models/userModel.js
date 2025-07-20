@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const locationType = require("./locationType");
 
-// fname, lname, email, password, locations, role, incidentIds
+// fname, lname, email, password, locations, role, incidentIds, fakeReports
 const userSchema = mongoose.Schema({
     fname: {
         type: String,
@@ -42,6 +42,10 @@ const userSchema = mongoose.Schema({
         ref: "Incident",
         required: false,
     },
+    fakeReportsCount: {
+        type: Number,
+        default: 0,
+    }
 });
 
 // Create geospatial index
