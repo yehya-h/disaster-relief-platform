@@ -1,9 +1,9 @@
 const mongoose = require("mongoose");
 const locationType = require("./locationType");
 
-// location, lastActive
+// liveLocation, lastActive
 const guestSchema = mongoose.Schema({
-    location: {
+    liveLocation: {
         type: locationType,
         required: true,
     },
@@ -14,7 +14,7 @@ const guestSchema = mongoose.Schema({
 });
 
 // Geospatial index for location queries
-guestSchema.index({ 'location.coordinates': '2dsphere' });
+guestSchema.index({ 'liveLocation.coordinates': '2dsphere' });
 
 // TTL index to auto-delete inactive guests after 30 days
 guestSchema.index({ lastActive: 1 }, { expireAfterSeconds: 30 * 24 * 60 * 60 });

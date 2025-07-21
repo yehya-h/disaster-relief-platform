@@ -23,6 +23,6 @@ const locationType = new mongoose.Schema({
             message: props => `${props.value} is not valid [longitude, latitude]`
         }
     }
-}, { _id: false }); // Disable automatic _id for subdocuments
+}, { timestamps: true, _id: false }); // Disable automatic _id for subdocuments
 
 module.exports = locationType;

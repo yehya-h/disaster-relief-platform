@@ -12,7 +12,10 @@ const addIncident = async (req, res) => {
             const imgbbResponse = await axios.post(
                 `https://api.imgbb.com/1/upload?key=${process.env.IMGBB_API_KEY}`,
                 {
-                    image: imageBase64
+                    image: imageBase64,
+                    name: req.file.originalname,
+                    type: req.file.mimetype,
+                    size: req.file.size
                 },
                 {
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' }

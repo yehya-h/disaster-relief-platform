@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const locationType = require("./locationType");
 
-// fname, lname, email, password, locations, role, incidentIds, fakeReports
+// fname, lname, email, password, liveLocation, locations, role, incidentIds, fakeReports
 const userSchema = mongoose.Schema({
     fname: {
         type: String,
@@ -23,24 +23,17 @@ const userSchema = mongoose.Schema({
         type: String,
         required: true,
     },
+    liveLocation: {
+        type: locationType,
+        required: true,
+    },
     locations: {
         type: [locationType],
-        required: true,
-        validate: {
-            validator: function (v) {
-                return v.length > 0;
-            },
-            message: 'At least one location is required'
-        }
+        required: false,
     },
     role: {
         type: Number,
         required: true,
-    },
-    incidentIds: {
-        type: [mongoose.Schema.Types.ObjectId],
-        ref: "Incident",
-        required: false,
     },
     fakeReportsCount: {
         type: Number,
@@ -49,6 +42,7 @@ const userSchema = mongoose.Schema({
 });
 
 // Create geospatial index
+userSchema.index({ 'liveLocation.coordinates': '2dsphere' });
 userSchema.index({ 'locations.coordinates': '2dsphere' });
 
 module.exports = mongoose.model("User", userSchema);

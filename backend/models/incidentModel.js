@@ -31,6 +31,7 @@ const incidentSchema = mongoose.Schema({
     },
     severity: {
         type: String,
+        enum: ['low', 'medium', 'high'],
         required: true,
     },
     fakeReports: [{  // Array of users who reported this as fake

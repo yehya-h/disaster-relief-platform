@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const locationType = require("./locationType");
 
-// title, location
+// title, location, capacity
 const shelterSchema = mongoose.Schema({
     title: {
         type: String,
@@ -9,6 +9,10 @@ const shelterSchema = mongoose.Schema({
     },
     location: {
         type: locationType,
+        required: true,
+    },  
+    capacity: {
+        type: Number,
         required: true,
     },
 });
