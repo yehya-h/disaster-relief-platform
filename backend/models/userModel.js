@@ -34,15 +34,21 @@ const userSchema = mongoose.Schema({
     role: {
         type: Number,
         required: true,
-    },
-    fakeReportsCount: {
-        type: Number,
-        default: 0,
     }
+}, { 
+    toJSON: { virtuals: true }  // Ensure virtuals are included in responses
 });
 
 // Create geospatial index
 userSchema.index({ 'liveLocation.coordinates': '2dsphere' });
 userSchema.index({ 'locations.coordinates': '2dsphere' });
+
+userSchema.virtual('fakeReportsCount', {
+    ref: 'Report',
+    localField: '_id',
+    foreignField: 'reporterId',
+    match: { reportType: 'fake' },
+    count: true
+});
 
 module.exports = mongoose.model("User", userSchema);

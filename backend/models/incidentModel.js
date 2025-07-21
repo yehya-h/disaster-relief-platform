@@ -34,35 +34,33 @@ const incidentSchema = mongoose.Schema({
         enum: ['low', 'medium', 'high'],
         required: true,
     },
-    fakeReports: [{  // Array of users who reported this as fake
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User"
-    }],
     isFake: {
         type: Boolean,
         default: false
     },
-    confirmationFlags: [{  // Array of users who confirmed it's real
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User"
-    }]
 }, { 
     toJSON: { virtuals: true }  // Ensure virtuals are included in responses
 });
 
 // Virtuals
-incidentSchema.virtual('fakeReportsCount').get(function() {
-    return this.fakeReports.length;
+incidentSchema.virtual('fakeReportsCount', {
+    ref: 'Report',
+    localField: '_id',
+    foreignField: 'incidentId',
+    match: { reportType: 'fake' },
+    count: true
 });
 
-incidentSchema.virtual('confirmationCount').get(function() {
-    return this.confirmationFlags.length;
+incidentSchema.virtual('confirmationCount', {
+    ref: 'Report',
+    localField: '_id',
+    foreignField: 'incidentId',
+    match: { reportType: 'confirmed' },
+    count: true
 });
 
 // Indexes
 incidentSchema.index({ 'location.coordinates': '2dsphere' });
-incidentSchema.index({ fakeReports: 1 });
-incidentSchema.index({ confirmationFlags: 1 });
 
 // Example middleware to auto-mark as fake if threshold reached
 incidentSchema.post('save', async function(doc) {
