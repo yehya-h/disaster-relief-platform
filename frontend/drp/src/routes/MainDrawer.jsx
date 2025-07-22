@@ -1,28 +1,27 @@
-// import { createDrawerNavigator } from '@react-navigation/drawer';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import React from 'react';
+import { createDrawerNavigator } from '@react-navigation/drawer';
 // import MainStack from './MainStack.jsx';
 import Profile from '../screens/Profile.jsx';
 import Posts from '../screens/Posts.jsx';
 import TabNavigator from './TabNavigator.jsx';
 
-// const Drawer = createDrawerNavigator();
-const Stack = createNativeStackNavigator();
+const Drawer = createDrawerNavigator();
 
 export default function MainDrawer() {
   return (
-    <Stack.Navigator
+    <Drawer.Navigator
       screenOptions={{
         headerShown: true, // Let drawer show the top bar with toggle
       }}
     >
-      <Stack.Screen
-        name="Homee"
+      <Drawer.Screen
+        name="Home"
         component={TabNavigator}
         options={{ headerShown: false }}
       />
-      <Stack.Screen name="Posts" component={Posts} />
+      <Drawer.Screen name="Posts" component={Posts} />
 
-      <Stack.Screen name="Profile" component={Profile} />
-    </Stack.Navigator>
+      <Drawer.Screen name="Profile" component={Profile} />
+    </Drawer.Navigator>
   );
 }
