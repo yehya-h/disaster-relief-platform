@@ -8,4 +8,15 @@ const getAllTypes = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
-module.exports = { getAllTypes };
+
+const addType = async (req, res) => {
+    try {
+        const { name, safetyTips } = req.body;
+        const type = await Type.create({ name, safetyTips });
+        res.status(201).json(type);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+module.exports = { getAllTypes, addType };

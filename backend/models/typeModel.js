@@ -13,3 +13,9 @@ const typeSchema = mongoose.Schema({
 });
 
 module.exports = mongoose.model("Type", typeSchema);
+
+//json format example with different safety tips
+// {
+//     "name": "Fire",
+//     "safetyTips": ["Stay calm", "Call 911", "Get out of the building", "Stay in a safe place"]
+// }
