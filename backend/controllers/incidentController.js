@@ -1,36 +1,32 @@
 const Incident = require("../models/incidentModel");
-const axios = require('axios');
-require('dotenv').config();
-
+const { uploadImageToImgbb } = require('../services/uploadImage');
+const Type = require('../models/typeModel');
 const addIncident = async (req, res) => {
     try {
-        const { incident } = req.body;
+        const incidentAnalysis = req.incidentAnalysis;
+        console.log(incidentAnalysis);
+
+        if(!incidentAnalysis.is_incident){
+            return res.status(400).json({ message: "No incident detected" });
+        } 
+        const incidentData = JSON.parse(req.body.incident);
         let imageUrl = null;
-        if (req.file) {
-            // Upload image to imgbb
-            const imageBase64 = req.file.buffer.toString('base64');
-            const imgbbResponse = await axios.post(
-                `https://api.imgbb.com/1/upload?key=${process.env.IMGBB_API_KEY}`,
-                {
-                    image: imageBase64,
-                    name: req.file.originalname,
-                    type: req.file.mimetype,
-                    size: req.file.size
-                },
-                {
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-                }
-            );
-            imageUrl = imgbbResponse.data.data.url;
-            const newIncident = new Incident({
-                ...JSON.parse(incident),
-                imageUrl: imageUrl
-            });
-            await newIncident.save();
-            res.status(201).json(newIncident);
-        } else {
-            return res.status(400).json({ message: "No image provided" });
-        }
+        imageUrl = await uploadImageToImgbb(req.file);
+
+        const typeId = await Type.findOne({ name: incidentAnalysis.type }).select('_id');
+
+        const newIncident = new Incident({
+            imageUrl: imageUrl,
+            description: incidentAnalysis.reformulated_description,
+            location: incidentData.location,
+            timestamp: new Date(),
+            reporterIds: [incidentData.user_id], // not last version 
+            typeId: typeId,
+            severity: incidentAnalysis.severity,
+        });
+        const savedIncident = await newIncident.save();
+        // console.log(savedIncident);
+        res.status(201).json(savedIncident);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -58,30 +54,30 @@ const getIncidentById = async (req, res) => {
     }
 };
 
-const uploadImageToImgbb = async (req, res) => {
-    try {
-        if (!req.file) {
-            return res.status(400).json({ message: "No image provided" });
-        }
-        const imageBase64 = req.file.buffer.toString('base64');
-        const imgbbResponse = await axios.post(
-            `https://api.imgbb.com/1/upload?key=${process.env.IMGBB_API_KEY}`,
-            {
-                image: imageBase64,
-                name: req.file.originalname,
-                type: req.file.mimetype,
-                size: req.file.size
-            },
-            {
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-            }
-        );
-        const imageUrl = imgbbResponse.data.data.url;
-        res.status(200).json({ imageUrl });
-    } catch (error) {
-        res.status(500).json({ message: error});
-    }
-};
+// const uploadImageToImgbb = async (req, res) => {
+//     try {
+//         if (!req.file) {
+//             return res.status(400).json({ message: "No image provided" });
+//         }
+//         const imageBase64 = req.file.buffer.toString('base64');
+//         const imgbbResponse = await axios.post(
+//             `https://api.imgbb.com/1/upload?key=${process.env.IMGBB_API_KEY}`,
+//             {
+//                 image: imageBase64,
+//                 name: req.file.originalname,
+//                 type: req.file.mimetype,
+//                 size: req.file.size
+//             },
+//             {
+//                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+//             }
+//         );
+//         const imageUrl = imgbbResponse.data.data.url;
+//         res.status(200).json({ imageUrl });
+//     } catch (error) {
+//         res.status(500).json({ message: error});
+//     }
+// };
 
 // ... existing code ...
 

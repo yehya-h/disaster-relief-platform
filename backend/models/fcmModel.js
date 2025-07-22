@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const fcmSchema = new mongoose.Schema({
-    user: {
+    userId: {
         type: mongoose.Schema.Types.ObjectId,
         refPath: 'userType',
         required: true

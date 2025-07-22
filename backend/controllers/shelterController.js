@@ -2,8 +2,8 @@ const Shelter = require("../models/shelterModel");
 
 const addShelter = async (req, res) => {
     try {
-        const { title, location } = req.body;
-        const shelter = new Shelter({ title, location });
+        const { title, location, capacity } = req.body;
+        const shelter = new Shelter({ title, location, capacity });
         await shelter.save();
         res.status(201).json(shelter);
     } catch (error) {
