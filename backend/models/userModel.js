@@ -55,19 +55,19 @@ module.exports = mongoose.model("User", userSchema);
 
 //json format example
 // {
-//     "fname": "John",
-//     "lname": "Doe",
-//     "email": "john.doe@example.com",
-//     "password": "password",
-//     "liveLocation": {
-//         "type": "Point",
-//         "coordinates": [123.456, 78.901]
-//     },
-//     "locations": [
-//         {
-//             "type": "Point",
-//             "coordinates": [123.456, 78.901]
-//         }
-//     ],
-//     "role": 0
+    // "fname": "John",
+    // "lname": "Doe",
+    // "email": "john.doe@example.com",
+    // "password": "password",
+    // "liveLocation": {
+    //     "type": "Point",
+    //     "coordinates": [123.456, 78.901]
+    // },
+    // "locations": [
+    //     {
+    //         "type": "Point",
+    //         "coordinates": [123.456, 78.901]
+    //     }
+    // ],
+    // "role": 0
 // }

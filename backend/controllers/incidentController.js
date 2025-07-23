@@ -10,6 +10,7 @@ const addIncident = async (req, res) => {
             return res.status(400).json({ message: "No incident detected" });
         } 
         const incidentData = JSON.parse(req.body.incident);
+        console.log(incidentData);
         let imageUrl = null;
         imageUrl = await uploadImageToImgbb(req.file);
 
@@ -20,9 +21,9 @@ const addIncident = async (req, res) => {
             description: incidentAnalysis.reformulated_description,
             location: incidentData.location,
             timestamp: new Date(),
-            reporterIds: [incidentData.user_id], // not last version 
+            reporterIds: [incidentData.userId], // not last version 
             typeId: typeId,
-            severity: incidentAnalysis.severity,
+            severity: incidentAnalysis.severity.toLowerCase(),
         });
         const savedIncident = await newIncident.save();
         // console.log(savedIncident);

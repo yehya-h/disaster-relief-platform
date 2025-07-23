@@ -1,11 +1,18 @@
 const axios = require('axios');
 const FormData = require('form-data');
-const fs = require('fs');
+// const fs = require('fs');
 
 class AnalyzerService {
-  static async analyzeIncident({ imagePath, type, severity, description }) {
+  static async analyzeIncident({ file, type, severity, description }) {
     const formData = new FormData();
-    formData.append('image', fs.createReadStream(imagePath));
+    formData.append('image', file.buffer, {
+      filename: file.originalname,
+      contentType: file.mimetype,
+      knownLength: file.size,
+      headers: {
+        'Content-Type': file.mimetype
+      }
+    });
     formData.append('type', type);
     formData.append('severity', severity);
     formData.append('description', description);
