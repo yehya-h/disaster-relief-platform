@@ -255,7 +255,7 @@ def analyze():
     response = model.generate_content(
         [
             {"mime_type": "image/jpeg", "data": compressed_img},
-            non_demo_instructions,
+            demo_instructions,
             f"Extra details provided by user: "
             f"type of incident = '{input_type}', "
             f"severity reported = '{input_severity}'."

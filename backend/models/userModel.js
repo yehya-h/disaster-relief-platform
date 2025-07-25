@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
-const locationType = require("./locationType");
 
-// fname, lname, email, password, liveLocation, locations, role, incidentIds, fakeReports
+// fname, lname, email, password, role, incidentIds, fakeReports
 const userSchema = mongoose.Schema(
   {
     fname: {
@@ -24,14 +23,6 @@ const userSchema = mongoose.Schema(
       type: String,
       required: true,
     },
-    liveLocation: {
-      type: locationType,
-      required: true,
-    },
-    locations: {
-      type: [locationType],
-      required: false,
-    },
     role: {
       type: Number,
       required: true,
@@ -41,11 +32,6 @@ const userSchema = mongoose.Schema(
     toJSON: { virtuals: true }, // Ensure virtuals are included in responses
   }
 );
-
-// Create geospatial index
-userSchema.index({ liveLocation: "2dsphere" });
-
-userSchema.index({ locations: "2dsphere" });
 
 userSchema.virtual("fakeReportsCount", {
   ref: "Report",
@@ -63,15 +49,5 @@ module.exports = mongoose.model("User", userSchema);
 // "lname": "Doe",
 // "email": "john.doe@example.com",
 // "password": "password",
-// "liveLocation": {
-//     "type": "Point",
-//     "coordinates": [123.456, 78.901]
-// },
-// "locations": [
-//     {
-//         "type": "Point",
-//         "coordinates": [123.456, 78.901]
-//     }
-// ],
 // "role": 0
 // }

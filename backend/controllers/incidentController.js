@@ -1,6 +1,7 @@
 const Incident = require("../models/incidentModel");
 const { uploadImageToImgbb } = require("../services/uploadImage");
 const Type = require("../models/typeModel");
+const Form = require("../models/formModel");
 const addIncident = async (req, res) => {
   try {
     const incidentAnalysis = req.incidentAnalysis;
@@ -68,10 +69,52 @@ const addIncident = async (req, res) => {
   }
 };
 
-const getIncidents = async (req, res) => {
+const getLatestIncidentForms = async (req, res) => {
   try {
-    const incidents = await Incident.find();
-    res.status(200).json(incidents);
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    // First get non-fake incidents
+    const validIncidents = await Incident.find({
+      isFake: false,
+      // lastUpdated: { $gte: twentyFourHoursAgo }
+    }).select('_id');
+
+    // Then get latest forms for these incidents
+    const latestForms = await Form.find({
+      incidentId: { $in: validIncidents.map(i => i._id) },
+      timestamp: { $gte: twentyFourHoursAgo },
+      active: true
+    }).sort({ timestamp: -1 });
+
+    res.status(200).json(latestForms);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}
+
+const getNearbyIncidents = async (req, res) => {
+  try {
+    const { latitude, longitude } = req.body;
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    // First get non-fake incidents
+    const validIncidents = await Incident.find({
+      isFake: false,
+      // lastUpdated: { $gte: twentyFourHoursAgo }
+    }).select('_id');
+    const nearbyIncidentsForms = await Form.find({
+      location: {
+        $near: {
+          $geometry: {
+            type: "Point",
+            coordinates: [longitude, latitude]
+          },
+          $maxDistance: 500
+        }
+      },
+      active: true,
+      timestamp: { $gte: twentyFourHoursAgo },
+      incidentId: { $in: validIncidents.map(i => i._id) }
+    }).sort({ timestamp: -1 });
+    res.status(200).json(nearbyIncidentsForms);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -115,11 +158,9 @@ const getIncidentById = async (req, res) => {
 //     }
 // };
 
-// ... existing code ...
-
 module.exports = {
   addIncident,
-  getIncidents,
+  getLatestIncidentForms,
   getIncidentById,
-  uploadImageToImgbb,
+  getNearbyIncidents,
 };

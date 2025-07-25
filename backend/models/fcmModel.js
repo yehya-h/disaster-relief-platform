@@ -18,7 +18,8 @@ const fcmSchema = new mongoose.Schema({
     },
     deviceId: {
         type: String,
-        required: true
+        required: true,
+        unique: true
     },
     lastUsed: Date
 });
