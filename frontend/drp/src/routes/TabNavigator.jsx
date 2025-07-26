@@ -6,10 +6,11 @@ import Home from '../screens/Home';
 import Notifications from '../screens/Notifications';
 import AddIncident from '../screens/AddIncident';
 import MapScreen from '../screens/MapScreen';
+import AuthStack from './Authstack';
 
 const Tab = createBottomTabNavigator();
 
-export default function TabNavigator() {
+export default function TabNavigator({ setIsLoggedIn, isLoggedIn }) {
   return (
     <Tab.Navigator
       screenOptions={{
@@ -29,6 +30,16 @@ export default function TabNavigator() {
         component={AddIncident}
         options={{ title: 'Add Incident' }}
       />
+      {
+        !isLoggedIn && (
+          <Tab.Screen
+            name="AuthStack"
+            options={{ title: 'SignIn' }}
+          >
+            {() => <AuthStack setIsLoggedIn={setIsLoggedIn} />}
+          </Tab.Screen>
+        )
+      }
     </Tab.Navigator>
   );
 }

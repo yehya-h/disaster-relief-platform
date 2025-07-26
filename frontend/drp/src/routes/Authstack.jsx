@@ -1,6 +1,6 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
-import SignIn from '../screens/signIn';
+import SignIn from '../screens/SignIn';
 import SignUp from '../screens/SignUp';
 
 const Stack = createStackNavigator();
@@ -14,6 +14,7 @@ export default function AuthStack({ setIsLoggedIn }) {
         },
         headerTintColor: 'white',
         headerBackTitle: 'Back',
+        headerShown:false
       }}
     >
       <Stack.Screen name="SignIn">
