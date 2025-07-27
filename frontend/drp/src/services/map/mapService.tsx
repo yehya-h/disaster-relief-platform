@@ -44,7 +44,12 @@ interface LocationMapProps {
   height?: number;
   width?: number;
   regionName: string;
+  hitAreas?: any[];
 }
+
+const TriangleMarker = () => (
+  <View style={triangleStyles.triangle} />
+);
 
 const LocationMap: React.FC<LocationMapProps> = ({
   latitude,
@@ -52,6 +57,7 @@ const LocationMap: React.FC<LocationMapProps> = ({
   height = 300,
   width = 300,
   regionName,
+  hitAreas = [],
 }) => {
   return (
     <View style={[styles.container, { width, height }]}>
@@ -61,15 +67,16 @@ const LocationMap: React.FC<LocationMapProps> = ({
         initialRegion={{
           latitude,
           longitude,
-          latitudeDelta: 0.002, // More zoomed in
-          longitudeDelta: 0.002,
+          latitudeDelta: 0.009, // More zoomed in
+          longitudeDelta: 0.009,
         }}
         customMapStyle={grayMapStyle}
-        scrollEnabled={false}
+        scrollEnabled={true}
         zoomEnabled={true}
         rotateEnabled={true}
         pitchEnabled={false}
       >
+        {/* User location marker */}
         <Marker coordinate={{ latitude, longitude }}>
           <Callout>
             <View>
@@ -79,10 +86,41 @@ const LocationMap: React.FC<LocationMapProps> = ({
             </View>
           </Callout>
         </Marker>
+        {/* Hit area triangle markers */}
+        {hitAreas.map((incident, idx) => {
+          const coords = incident.location?.coordinates;
+          if (!coords || coords.length !== 2) return null;
+          return (
+            <Marker
+              key={`hitarea-${idx}`}
+              coordinate={{ latitude: coords[1], longitude: coords[0] }}
+              title={incident.type || 'Disaster Hit Area'}
+              description={incident.description || ''}
+            >
+              <TriangleMarker />
+            </Marker>
+          );
+        })}
       </MapView>
     </View>
   );
 };
+
+const triangleStyles = StyleSheet.create({
+  triangle: {
+    width: 0,
+    height: 0,
+    backgroundColor: 'transparent',
+    borderStyle: 'solid',
+    borderLeftWidth: 12,
+    borderRightWidth: 12,
+    borderBottomWidth: 24,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderBottomColor: '#d90a0aff', // Red triangle
+    alignSelf: 'center',
+  },
+});
 
 const styles = StyleSheet.create({
   container: {

@@ -6,8 +6,8 @@ const analyzeIncident = require('../middlewares/analyzer.middleware');
 
 router.post('/', upload.single('image'), analyzeIncident, addIncident);
 router.get('/', getLatestIncidentForms);
-router.get('/:id', getIncidentById);
 router.post('/nearby', getNearbyIncidents);
+router.get('/:id', getIncidentById);
 // router.post('/upload-image', upload.single('image'), uploadImageToImgbb);
 
 module.exports = router;

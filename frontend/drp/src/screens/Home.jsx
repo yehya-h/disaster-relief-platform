@@ -1,45 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, SafeAreaView, ScrollView } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { checkAndRequestLocationPermission } from "../services/permissions/locationPermissionService";
 import { getCurrentLocation } from "../services/location/locationService";
 import Feather from 'react-native-vector-icons/Feather';
 import { getCountryNameFromCoords } from "../services/geocoding/geocodingService";
 import LocationMap from "../services/map/mapService";
-import InHitArea from "../services/hitArea/inHitArea";
+import { inHitArea, getIncident } from "../services/hitArea/inHitArea";
 
 export default function Home() {
-
   const safetyQuotes = [
     "Safety doesn’t happen by accident.",
     "Stay alert. Stay alive.",
-    "Be aware of your surroundings at all times.",
-    "Always have an emergency plan — and practice it.",
-    "Don’t assume others will be cautious for you.",
-    "If it feels unsafe, it probably is. Trust your instincts.",
-    "Plan ahead — emergencies don’t send invites.",
-    "Learn from near misses — they’re warning signs.",
-    "Complacency kills. Keep safety routines fresh.",
-    "Document hazards before they become disasters.",
-    "Precaution is better than cure. – Edward Coke",
-    "Keep walkways clear to prevent trips and falls.",
-    "Check fire extinguishers and smoke detectors regularly.",
-    "Label hazardous materials clearly.",
-    "Report unsafe conditions immediately.",
-    "Don’t bypass safety equipment — it’s there for a reason.",
-    "Lock up tools and chemicals away from children.",
-    "Always wear the right protective gear for the job.",
-    "Electrical cords shouldn’t run under rugs or across walkways.",
-    "Store heavy items on lower shelves to prevent falling hazards.",
-    "Keep a 'go bag' with essentials for emergencies.",
-    "Know local emergency numbers — and teach them to kids.",
-    "Secure tall furniture and heavy items in earthquake-prone areas.",
-    "Floods coming? Move valuables to higher ground early.",
-    "Make copies of important documents and store them digitally.",
-    "Hope for the best, prepare for the worst.",
-    "Practice fire and evacuation drills twice a year.",
-    "Have a meeting point for family after disasters.",
-    "Back up important data — digitally and physically.",
-    "Stay informed through trusted emergency alert systems."
+    "Safety first is safety always.",
+    "Your safety is our priority.",
   ];
 
   const [randomQuote, setRandomQuote] = useState('');
@@ -47,33 +21,62 @@ export default function Home() {
   const [locationName, setLocationName] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [hitAreas, setHitAreas] = useState([]);
+  const [isSafe, setIsSafe] = useState(null); // Added state for safety status
 
   useEffect(() => {
     setRandomQuote(safetyQuotes[Math.floor(Math.random() * safetyQuotes.length)]);
   }, []);
 
-  useEffect(() => {
-    async function fetchLocation() {
-      setLoading(true);
-      setError(null);
-      const hasPermission = await checkAndRequestLocationPermission();
-      if (!hasPermission) {
-        setError('Location permission denied');
-        setLoading(false);
-        return;
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+
+      async function fetchLocation() {
+        setLoading(true);
+        setError(null);
+        const hasPermission = await checkAndRequestLocationPermission();
+        if (!hasPermission) {
+          if (isActive) {
+            setError('Location permission denied');
+            setLoading(false);
+          }
+          return;
+        }
+
+        const loc = await getCurrentLocation();
+        if (loc && isActive) {
+          setLocation(loc);
+          const name = await getCountryNameFromCoords(loc.latitude, loc.longitude);
+          setLocationName(name);
+
+          // Pass coordinates to inHitArea
+          const isInHitArea = await inHitArea(loc.longitude, loc.latitude);
+          setIsSafe(!isInHitArea); // Update safety status
+          
+          if (isInHitArea) {
+            // Pass coordinates to getIncident
+            const incidents = await getIncident(loc.longitude, loc.latitude);
+            setHitAreas(incidents || []);
+          } else {
+            setHitAreas([]);
+          }
+        } else if (isActive) {
+          setError('Failed to fetch location');
+        }
+
+        if (isActive) {
+          setLoading(false);
+        }
       }
-      const loc = await getCurrentLocation();
-      if (loc) {
-        setLocation(loc);
-        const name = await getCountryNameFromCoords(loc.latitude, loc.longitude);
-        setLocationName(name);
-      } else {
-        setError('Failed to fetch location');
-      }
-      setLoading(false);
-    }
-    fetchLocation();
-  }, []);
+
+      fetchLocation();
+
+      return () => {
+        isActive = false;
+      };
+    }, [])
+  );
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -93,9 +96,11 @@ export default function Home() {
                 height={300}
                 width={'80%'}
                 regionName={locationName}
+                hitAreas={hitAreas}
               />
             )}
-            <Status />
+            {/* Pass safety status to Status component */}
+            <Status isSafe={isSafe} />
             <Quote key={randomQuote} text={randomQuote} />
           </View>
         )}
@@ -104,24 +109,8 @@ export default function Home() {
   );
 }
 
-const Header = () => (
-  <View style={styles.header}>
-    <Feather name="map-pin" size={60} color="green" style={styles.icon} />
-    <Text style={styles.locationName}>Where I Am?</Text>
-  </View>
-);
-
-const Status = () => {
-  const [isSafe, setIsSafe] = useState(null);
-
-  useEffect(() => {
-    const check = async () => {
-      const result = await InHitArea();
-      setIsSafe(result);
-    };
-    check();
-  }, []);
-
+// Updated Status component to accept isSafe prop
+const Status = ({ isSafe }) => {
   if (isSafe === null) {
     return <ActivityIndicator size="small" color="gray" style={{ marginTop: 30 }} />;
   }
@@ -146,11 +135,20 @@ const Status = () => {
   );
 };
 
+// Other components remain unchanged
+const Header = () => (
+  <View style={styles.header}>
+    <Feather name="map-pin" size={60} color="green" style={styles.icon} />
+    <Text style={styles.locationName}>Where I Am?</Text>
+  </View>
+);
+
 const Quote = ({ text }) => (
   <Text style={styles.quote}>
     {text}
   </Text>
 );
+
 
 const styles = StyleSheet.create({
   safeArea: {
