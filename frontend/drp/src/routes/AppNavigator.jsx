@@ -6,35 +6,54 @@ import MainDrawer from './MainDrawer.jsx';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import jwtDecode from "jwt-decode";
 import { useDispatch, useSelector } from 'react-redux';
-import { addUser } from '../redux/UserSlice';
+import { addUser, updateUserDetails } from '../redux/UserSlice';
+import { addLiveLoc } from '../redux/LiveLocSlice';
 import { guestToken } from '../api/AuthApi';
+import { getUserById } from '../api/UserApi';
 import DeviceInfo from 'react-native-device-info';
 import { getCurrentLocation } from '../services/location/locationService';
+import TabNavigator from './TabNavigator';
 
 export default function AppNavigator() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const dispatch = useDispatch();
-  console.log("jwtDecode type:", typeof jwtDecode);  // should log 'function'
 
   useEffect(() => {
     const checkToken = async () => {
       try {
         const token = await AsyncStorage.getItem("token");
         console.log("token: ", token);
+        const loc = await getCurrentLocation();
         if (token) {
           const decoded = jwtDecode(token);
-          console.log("existing token: ", "role:", decoded," ", token);
-          if (decoded.role == 0) setIsLoggedIn(true);
+          console.log("existing token: ", "role:", decoded, " ", token);
+          if (decoded.role == 0) {
+            setIsLoggedIn(true);
+            try {
+              const userDetails = await getUserById();
+              dispatch(updateUserDetails({
+                fname: userDetails.fname,
+                lname: userDetails.lname,
+                email: userDetails.email
+              }));
+            } catch (error) {
+              console.error('Error fetching user details:', error);
+            }
+          }
           dispatch(addUser({
             userId: decoded.id,
-            role: decoded.role,   
+            role: decoded.role,
             fcmToken: '',
             deviceId: await DeviceInfo.getUniqueId()
           }));
+
+          dispatch(addLiveLoc({
+            latitude: loc.latitude,
+            longitude: loc.longitude
+          }));
         }
         else {
-          const loc = await getCurrentLocation();
           const response = await guestToken({
             deviceId: await DeviceInfo.getUniqueId(),
             liveLocation: {
@@ -42,7 +61,7 @@ export default function AppNavigator() {
               coordinates: [loc.longitude, loc.latitude]
             }
           });
-          console.log("token: ", response.token);
+          console.log("new token: ", response.token);
           if (response.token) {
             const decoded = jwtDecode(response.token);
             await AsyncStorage.setItem("token", response.token);
@@ -52,6 +71,10 @@ export default function AppNavigator() {
               role: decoded.role,
               fcmToken: '',
               deviceId: await DeviceInfo.getUniqueId()
+            }));
+            dispatch(addLiveLoc({
+              latitude: loc.latitude,
+              longitude: loc.longitude
             }));
           }
         }
@@ -74,11 +97,11 @@ export default function AppNavigator() {
 
   return (
     <NavigationContainer>
-      {/* {isLoggedIn ? ( */}
-        <MainDrawer setIsLoggedIn={setIsLoggedIn} isLoggedIn={isLoggedIn} />
-      {/* ) : (
-        <AuthStack setIsLoggedIn={setIsLoggedIn} />
-      )} */}
+      {isLoggedIn ? (
+      <MainDrawer setIsLoggedIn={setIsLoggedIn} isLoggedIn={isLoggedIn} />
+      ) : (
+        <TabNavigator setIsLoggedIn={setIsLoggedIn} isLoggedIn={isLoggedIn} />
+      )} 
     </NavigationContainer>
   );
 }

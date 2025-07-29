@@ -6,12 +6,13 @@ const Fcm = require("../models/fcmModel");
 const LiveLocation = require("../models/liveLocationModel");
 const mongoose = require("mongoose");
 const { guestToken } = require("./guestController");
+const UserLocation = require("../models/userLocationModel");
 
 const register = async (req, res) => {
     console.log("fct: register --- req: ", req.body);
     const session = await mongoose.startSession();
     session.startTransaction();
-    const { fname, lname, email, password, role, liveLocation, deviceId } = req.body;
+    const { fname, lname, email, password, role, liveLocation, deviceId, locations } = req.body;
     try {
         const existing = await User.findOne({ email }).session(session);
         if (existing) {
@@ -24,6 +25,17 @@ const register = async (req, res) => {
         const userArr = await User.create([{ fname, lname, email, password: hashedPassword, role }], { session });
         const user = userArr[0];
         await LiveLocation.create([{ userId: user._id, location: liveLocation, deviceId: deviceId }], { session });
+        
+        if (locations && locations.length > 0) {
+            for (const location of locations) {
+                console.log("location: ", location);
+                await UserLocation.create([{
+                    userId: user._id,
+                    location: location
+                }], { session });
+            }
+        }
+        
         const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "30d" });
 
         // Remove guest if exists

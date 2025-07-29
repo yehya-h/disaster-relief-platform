@@ -11,12 +11,19 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logoutUser } from '../api/AuthApi';
 import { getCurrentLocation } from '../services/location/locationService';
 import DeviceInfo from 'react-native-device-info';
-import { removeUser, addUser } from '../redux/UserSlice';
+import { removeUser, addUser, updateUserDetails } from '../redux/UserSlice';
 
 const CustomDrawerContent = (props) => {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.user);
-  const isLoggedIn = user && user.userId && user.role === 0; // role 0 = logged in user
+  
+  // Get user's name
+  const getUserDisplayName = () => {
+    if (user.fname) {
+      return user.fname;
+    } 
+    return 'User';
+  };
 
   const handleLogout = async () => {
     Alert.alert(
@@ -44,14 +51,13 @@ const CustomDrawerContent = (props) => {
                 }
               };
 
-              // Call logout API
               const response = await logoutUser(logoutData);
               
-              // Store the new guest token
               if (response && response.token) {
                 await AsyncStorage.setItem('token', response.token);
+
+                dispatch(removeUser())
                 
-                // Update Redux state with guest info
                 const jwtDecode = require('jwt-decode');
                 const decoded = jwtDecode(response.token);
                 dispatch(addUser({
@@ -66,13 +72,9 @@ const CustomDrawerContent = (props) => {
                 dispatch(removeUser());
               }
               
-              // Set isLoggedIn to false
               if (props.setIsLoggedIn) {
                 props.setIsLoggedIn(false);
               }
-              
-              // Navigate to home (user is now a guest)
-              props.navigation.navigate('Home');
               
             } catch (error) {
               console.error('Logout error:', error);
@@ -88,15 +90,11 @@ const CustomDrawerContent = (props) => {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerText}>
-          {isLoggedIn ? 'Welcome, User!' : 'Guest Mode'}
-        </Text>
-        <Text style={styles.subHeaderText}>
-          {isLoggedIn ? 'You are logged in' : 'You are browsing as a guest'}
+          {`Welcome, ${getUserDisplayName()}!`}
         </Text>
       </View>
 
       <View style={styles.menuContainer}>
-        {/* Navigation items */}
         <TouchableOpacity
           style={styles.menuItem}
           onPress={() => props.navigation.navigate('Home')}
@@ -118,15 +116,12 @@ const CustomDrawerContent = (props) => {
           <Text style={styles.menuText}>Profile</Text>
         </TouchableOpacity>
 
-        {/* Logout button - only show for logged in users */}
-        {isLoggedIn && (
           <TouchableOpacity
             style={[styles.menuItem, styles.logoutButton]}
             onPress={handleLogout}
           >
             <Text style={[styles.menuText, styles.logoutText]}>Logout</Text>
           </TouchableOpacity>
-        )}
       </View>
 
       <View style={styles.footer}>

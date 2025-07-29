@@ -1,19 +1,20 @@
-import React from 'react';
-import { View, TextInput, Button, StyleSheet, Text, Alert } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, TextInput, TouchableOpacity, StyleSheet, Text, Alert } from 'react-native';
 import * as yup from 'yup';
 import { Formik } from 'formik';
-import { registerUser } from '../api/AuthApi';
 import { useSelector, useDispatch } from 'react-redux';
-import { addUser } from '../redux/UserSlice';
+import { setUserData, clearSignupData } from '../redux/signupLocationsSlice';
 import { getCurrentLocation } from '../services/location/locationService';
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import jwtDecode from "jwt-decode";
 
 export default function SignUpScreen({ navigation, ...others }) {
-  // const liveLoc = useSelector((state) => state.liveLoc.liveLoc);
   const deviceId = useSelector((state) => state.user.deviceId);
-  console.log("deviceId: ", deviceId);
+  const { locations } = useSelector((state) => state.signupLocations);
   const dispatch = useDispatch();
+
+  // Clear any existing signup data when component mounts
+  useEffect(() => {
+    dispatch(clearSignupData());
+  }, [dispatch]);
 
   let userSchema = yup.object({
     fname: yup.string().required("First name is required"),
@@ -23,7 +24,7 @@ export default function SignUpScreen({ navigation, ...others }) {
     cPassword: yup.string().oneOf([yup.ref('password')], "Passwords does not match").required("Confirm Password is required"),
   });
 
-  const onSignUp = async (values) => {
+  const onContinue = async (values) => {
     try {
       const loc = await getCurrentLocation();
       const userPayload = { 
@@ -38,23 +39,19 @@ export default function SignUpScreen({ navigation, ...others }) {
           },
           deviceId: deviceId
       };
-      const res = await registerUser(userPayload);
-      console.log("Signup response:", res);
-      if (res && res.token) {
-        await AsyncStorage.setItem('token', res.token);
-        const decoded = jwtDecode(res.token);
-        console.log("user ", decoded, " ", res.token);
-        dispatch(addUser({userId: decoded.id, role: decoded.role}));
-        others.setIsLoggedIn(true);
-      } else {
-        Alert.alert('Signup failed', 'Invalid response from server');
-      }
+      
+      // Save user data to Redux state
+      dispatch(setUserData(userPayload));
+      
+      // Navigate to location selection screen
+      navigation.navigate('LocationSelection', {
+        setIsLoggedIn: others.setIsLoggedIn
+      });
 
     } catch (e) {
-      console.log("Signup error:", e);
-      Alert.alert('Signup failed', e.response?.data?.message || e.message);
+      console.log("Location error:", e);
+      Alert.alert('Error', 'Failed to get current location. Please try again.');
     }
-
   };
 
   return (
@@ -63,11 +60,10 @@ export default function SignUpScreen({ navigation, ...others }) {
       initialValues={{ fname: '', lname: '', email: '', password: '', cPassword: '' }}
       onSubmit={(values) => {
         console.log(values);
-        onSignUp(values);
+        onContinue(values);
       }}
     >
       {({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
-        // handleBlur('email'): marks field as touched.
         <View style={styles.container}>
           <Text style={styles.title}>Create Account</Text>
           <TextInput
@@ -121,7 +117,10 @@ export default function SignUpScreen({ navigation, ...others }) {
           />
           {touched.cPassword && errors.cPassword && <Text style={styles.error}>{errors.cPassword}</Text>}
 
-          <Button title="Sign Up" onPress={handleSubmit} />
+          <TouchableOpacity style={styles.continueButton} onPress={handleSubmit}>
+            <Text style={styles.continueButtonText}>Press here to continue →</Text>
+          </TouchableOpacity>
+          
           <Text style={styles.loginLink} onPress={() => navigation.goBack()}>
             Already have an account? Login
           </Text>
@@ -143,5 +142,29 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   error: { color: 'red', marginBottom: 10, textAlign: 'center' },
+  continueButton: {
+    backgroundColor: '#007AFF',
+    padding: 15,
+    borderRadius: 8,
+    marginTop: 10,
+    alignItems: 'center',
+  },
+  continueButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
   loginLink: { color: '#007bff', marginTop: 20, textAlign: 'center' },
+  savedLocationsIndicator: {
+    backgroundColor: '#e0f2f7',
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  savedLocationsText: {
+    color: '#007bff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
 });

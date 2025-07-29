@@ -14,7 +14,12 @@ export default function TabNavigator({ setIsLoggedIn, isLoggedIn }) {
   return (
     <Tab.Navigator
       screenOptions={{
-        headerLeft: () => <DrawerToggleButton />,
+        headerLeft: () =>{
+          if(isLoggedIn){
+            return <DrawerToggleButton />;
+          }
+          return null;
+        },
         // headerTitleAlign: 'center',
       }}
     >
@@ -34,7 +39,7 @@ export default function TabNavigator({ setIsLoggedIn, isLoggedIn }) {
         !isLoggedIn && (
           <Tab.Screen
             name="AuthStack"
-            options={{ title: 'SignIn' }}
+            options={{ title: 'Login', headerShown: false }}
           >
             {() => <AuthStack setIsLoggedIn={setIsLoggedIn} />}
           </Tab.Screen>

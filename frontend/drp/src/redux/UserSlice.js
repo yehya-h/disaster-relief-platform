@@ -7,6 +7,9 @@ export const userSlice = createSlice({
     role: '',
     fcmToken: '',
     deviceId: '',
+    fname: '',
+    lname: '',
+    email: '',
   },
   reducers: {
     addUser: (state, action) => {
@@ -15,14 +18,22 @@ export const userSlice = createSlice({
       state.fcmToken = action.payload.fcmToken;
       state.deviceId = action.payload.deviceId;
     },
-    removeUser: () => {
+    updateUserDetails: (state, action) => {
+      state.fname = action.payload.fname;
+      state.lname = action.payload.lname;
+      state.email = action.payload.email;
+    },
+    removeUser: (state) => {
       state.userId = '';
       state.role = '';
       state.fcmToken = '';
       state.deviceId = '';
+      state.fname = '';
+      state.lname = '';
+      state.email = '';
     },
   },
 });
 
-export const { addUser, removeUser } = userSlice.actions;
+export const { addUser, updateUserDetails, removeUser } = userSlice.actions;
 export default userSlice.reducer;
