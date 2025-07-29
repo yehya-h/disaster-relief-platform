@@ -2,7 +2,6 @@ import React from 'react';
 import { useState, useEffect } from 'react';
 import { Picker } from '@react-native-picker/picker';
 import { submitIncidentApi } from '../api/incidentApi';
-// import { fetchIncidentTypes } from '../api/incidentTypes';
 import { fetchIncidentTypes } from '../redux/incidentTypesSlice';
 import { useSelector, useDispatch } from 'react-redux';
 import {
@@ -44,8 +43,11 @@ export default function AddIncident() {
 
     fetchData();
   }, [dispatch]);
-  const liveLocation = useSelector(state => state.liveLoc.liveLoc);
-  console.log('Live coordinates:', liveLocation);
+
+  // const liveLocation = useSelector(state => state.liveLoc.liveLoc);
+  // useEffect(() => {
+  //   console.log('Live coordinates:', liveLocation);
+  // }, [liveLocation]);
 
   const requestCameraPermission = async () => {
     const granted = await PermissionsAndroid.request(
@@ -87,16 +89,24 @@ export default function AddIncident() {
     try {
       setUploading(true);
 
-      const liveLocation = getCurrentLocation();
+      const liveLocation = await getCurrentLocation();
+
+      if (!liveLocation) {
+        Alert.alert('Location Error', 'Unable to fetch your current location.');
+        setUploading(false);
+        return;
+      } else {
+        console.log('live location:', liveLocation);
+      }
 
       const incidentData = {
         type: values.type, // Id from Picker
         severity: values.severity,
         description: values.description || '',
-        userId: '687feef629508b6ef7143985', // Replace later
+        // userId: '687feef629508b6ef7143985',
         timestamp: Date.now,
         location: {
-          coordinates: [liveLocation.latitude, liveLocation.longitude],
+          coordinates: [liveLocation.longitude, liveLocation.latitude],
           // coordinates: [35, 45],
         },
       };
