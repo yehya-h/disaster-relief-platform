@@ -42,3 +42,25 @@ export const submitIncidentApi = async (incidentData, imageData) => {
   //     throw error;
   //   }
 };
+
+export const getLatestIncidents = async () => {
+  try {
+    const response = await api.get(`/incidents/latest`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching latest incidents:', error);
+    throw error;
+  }
+};
+
+export const getNearbyIncidents = async (latitude, longitude) => {
+  try {
+    const response = await api.get(`/incidents/nearby`, {
+      params: { latitude, longitude },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching nearby incidents:', error);
+    throw error;
+  }
+};

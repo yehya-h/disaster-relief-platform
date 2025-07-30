@@ -17,9 +17,9 @@ router.post(
   analyzeIncident,
   addIncident
 );
-router.get("/", getLatestIncidentForms);
+router.get("/latest", getLatestIncidentForms);
+router.get("/nearby", getNearbyIncidents);
 router.get("/:id", getIncidentById);
-router.post("/nearby", getNearbyIncidents);
 // router.post('/upload-image', upload.single('image'), uploadImageToImgbb);
 
 module.exports = router;

@@ -11,7 +11,7 @@ import { getUserById } from '../api/UserApi';
 import React, { useState } from 'react';
 import { showSuccessToast } from '../utils/toast';
 
-export default function LoginScreen({ navigation, ...others }) {
+export default function SignIn({ navigation, ...others }) {
   const dispatch = useDispatch();
   const deviceId = useSelector((state) => state.user.deviceId);
   const [isSubmitting, setIsSubmitting] = useState(false);

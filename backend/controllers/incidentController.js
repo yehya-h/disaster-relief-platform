@@ -2,6 +2,8 @@ const Incident = require("../models/incidentModel");
 const { uploadImageToImgbb } = require("../services/uploadImage");
 const Type = require("../models/typeModel");
 const Form = require("../models/formModel");
+const axios = require("axios");
+
 const mongoose = require("mongoose");
 
 const addIncident = async (req, res) => {
@@ -104,24 +106,25 @@ const getLatestIncidentForms = async (req, res) => {
     const validIncidents = await Incident.find({
       isFake: false,
       // lastUpdated: { $gte: twentyFourHoursAgo }
-    }).select("_id");
-
+    }).select('_id');
+    console.log(validIncidents);
     // Then get latest forms for these incidents
     const latestForms = await Form.find({
       incidentId: { $in: validIncidents.map((i) => i._id) },
       timestamp: { $gte: twentyFourHoursAgo },
       active: true,
     }).sort({ timestamp: -1 });
-
+    console.log(latestForms);
     res.status(200).json(latestForms);
   } catch (error) {
+    console.error('Error fetching latest incident forms:', error);
     res.status(500).json({ message: error.message });
   }
 };
 
 const getNearbyIncidents = async (req, res) => {
   try {
-    const { latitude, longitude } = req.body;
+    const { latitude, longitude } = req.query;
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     // First get non-fake incidents
     const validIncidents = await Incident.find({
@@ -144,6 +147,7 @@ const getNearbyIncidents = async (req, res) => {
     }).sort({ timestamp: -1 });
     res.status(200).json(nearbyIncidentsForms);
   } catch (error) {
+    console.error('Error fetching nearby incidents:', error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -161,7 +165,7 @@ const getIncidentById = async (req, res) => {
   }
 };
 
-// const uploadImageToImgbb = async (req, res) => {
+// const tryUploadImageToImgbb = async (req, res) => {
 //     try {
 //         if (!req.file) {
 //             return res.status(400).json({ message: "No image provided" });
@@ -182,6 +186,7 @@ const getIncidentById = async (req, res) => {
 //         const imageUrl = imgbbResponse.data.data.url;
 //         res.status(200).json({ imageUrl });
 //     } catch (error) {
+//       console.error('Image upload failed:', error);
 //         res.status(500).json({ message: error});
 //     }
 // };
@@ -191,4 +196,5 @@ module.exports = {
   getLatestIncidentForms,
   getIncidentById,
   getNearbyIncidents,
+  // tryUploadImageToImgbb,
 };
