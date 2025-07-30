@@ -15,6 +15,8 @@ import {
   requestNotificationPermission,
   getFcmToken,
 } from './src/services/fcmService';
+import messaging from '@react-native-firebase/messaging';
+import { Alert } from 'react-native';
 
 function App() {
   useEffect(() => {
@@ -26,6 +28,17 @@ function App() {
     }
     setupNotifications();
   }, []);
+  useEffect(() => {
+    const unsubscribe = messaging().onMessage(async remoteMessage => {
+      Alert.alert(
+        remoteMessage.notification?.title || '🚨 Notification',
+        remoteMessage.notification?.body || 'You have a new alert.',
+      );
+    });
+
+    return unsubscribe;
+  }, []);
+
   return (
     <Provider store={store}>
       <AppNavigator />

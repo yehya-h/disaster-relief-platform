@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "494910770319",
+    "project_id": "drpnotifications",
+    "storage_bucket": "drpnotifications.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:494910770319:android:8517342c2a42561c32f4fa",
+        "android_client_info": {
+          "package_name": "com.drp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCfLYdWcfYY8NhNnN0lu64IQFvFOjjSrZ4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

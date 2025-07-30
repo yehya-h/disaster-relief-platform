@@ -5,6 +5,7 @@ const Form = require("../models/formModel");
 const axios = require("axios");
 
 const mongoose = require("mongoose");
+const { triggerNotification } = require("../services/notificationService");
 
 const addIncident = async (req, res) => {
   let session;
@@ -85,7 +86,14 @@ const addIncident = async (req, res) => {
       await session.commitTransaction();
       session.endSession();
 
-      //  triggerNearbyNotification(location, type);
+      triggerNotification(
+        formData.location,
+        incidentAnalysis.type,
+        incidentAnalysis.reformulated_description,
+        newIncident._id
+      ).catch((err) => {
+        console.error("Notification failed:", err);
+      });
 
       return res.status(201).json(savedIncident);
     }

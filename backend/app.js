@@ -5,7 +5,7 @@ const incidentRoutes = require("./routes/incidentRoutes");
 const shelterRoutes = require("./routes/shelterRoutes");
 const typeRoutes = require("./routes/typeRoutes");
 const guestController = require("./controllers/guestController");
-// const fcmRoutes = require("./routes/fcmRoutes");
+const fcmRoutes = require("./routes/fcmRoutes");
 const authToken = require("./controllers/authController").authToken;
 const authRole = require("./controllers/authController").authRole;
 const authController = require("./controllers/authController");
@@ -23,7 +23,7 @@ app.use("/api/incidents", authToken, incidentRoutes);
 app.use("/api/shelters", authToken, shelterRoutes);
 app.use("/api/types", authToken, typeRoutes);
 app.post("/guestToken", guestController.guestToken);
-// app.use("/api/fcm", authToken, fcmRoutes);
+app.use("/api/fcm", authToken, fcmRoutes);
 app.post("/api/logout", authToken, authRole(0), authController.logout);
 app.use("/api/user", authToken, authRole(0), userRoutes);
 
