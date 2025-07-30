@@ -16,7 +16,13 @@ const incidentTypesSlice = createSlice({
   },
 });
 
-export const fetchIncidentTypes = () => async dispatch => {
+export const fetchIncidentTypes = (forceRefresh = false) => async (dispatch, getState) => {
+  const { incidentTypes } = getState().incidentTypes;
+
+  if (!forceRefresh && incidentTypes.length > 0) {
+    return;
+  }
+
   try {
     const data = await getAllIncidentTypes();
     dispatch(setTypes(data));

@@ -1,4 +1,4 @@
-import React, { use, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import MapView, {
   Marker,
   Circle,
@@ -7,204 +7,238 @@ import MapView, {
 } from 'react-native-maps';
 import { Text, View, StyleSheet } from 'react-native';
 import { isWithinDistance } from '../services/location/distanceService';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchIncidentTypes } from '../redux/incidentTypesSlice';
 
-const DisasterMap = React.memo(({ shelters, incidents, latitude, longitude }) => {
-  const [zoomLevel, setZoomLevel] = useState(15);
-  const [markerSize, setMarkerSize] = useState(24); // Default marker size
-  const types = useSelector(state => state.incidentTypes.incidentTypes);
+const DisasterMap = React.memo(
+  ({ shelters, incidents, latitude, longitude }) => {
+    const [zoomLevel, setZoomLevel] = useState(15);
+    const [markerSize, setMarkerSize] = useState(24); // Default marker size
+    const types = useSelector(state => state.incidentTypes.incidentTypes);
 
-  // Calculate zoom level from region
-  const getZoomLevel = region => {
-    const angle = region.longitudeDelta;
-    const zoom = Math.round(Math.log(360 / angle) / Math.LN2);
-    return zoom;
-  };
+    const dispatch = useDispatch();
+    // Fetch Redux data on component mount
+    useEffect(() => {
+      const fetchData = async () => {
+        try {
+          await Promise.all([dispatch(fetchIncidentTypes())]);
+          // console.log('Redux data fetch completed');
+        } catch (err) {
+          console.error('Error fetching data:', err);
+        }
+      };
 
-  // Calculate marker size based on zoom level
-  const getMarkerSize = zoom => {
-    const minSize = 20;
-    const maxSize = 40;
-    const minZoom = 10;
-    const maxZoom = 20;
+      fetchData();
+    }, [dispatch]);
 
-    const clampedZoom = Math.max(minZoom, Math.min(zoom, maxZoom));
-    return (
-      minSize +
-      ((clampedZoom - minZoom) / (maxZoom - minZoom)) * (maxSize - minSize)
+    // Calculate zoom level from region
+    const getZoomLevel = region => {
+      const angle = region.longitudeDelta;
+      const zoom = Math.round(Math.log(360 / angle) / Math.LN2);
+      return zoom;
+    };
+
+    // Calculate marker size based on zoom level
+    const getMarkerSize = zoom => {
+      const minSize = 20;
+      const maxSize = 40;
+      const minZoom = 10;
+      const maxZoom = 20;
+
+      const clampedZoom = Math.max(minZoom, Math.min(zoom, maxZoom));
+      return (
+        minSize +
+        ((clampedZoom - minZoom) / (maxZoom - minZoom)) * (maxSize - minSize)
+      );
+    };
+
+    // Professional marker components
+    const ShelterMarker = ({ size }) => (
+      <View style={[styles.markerContainer, { width: size, height: size }]}>
+        <View style={[styles.shelterMarker, { width: size, height: size }]}>
+          <View style={styles.shelterIcon}>
+            <Text style={[styles.markerText, { fontSize: size * 0.4 }]}>S</Text>
+          </View>
+        </View>
+        <View style={[styles.markerShadow, { width: size, height: size }]} />
+      </View>
     );
-  };
 
-  // Professional marker components
-  const ShelterMarker = ({ size }) => (
-    <View style={[styles.markerContainer, { width: size, height: size }]}>
-      <View style={[styles.shelterMarker, { width: size, height: size }]}>
-        <View style={styles.shelterIcon}>
-          <Text style={[styles.markerText, { fontSize: size * 0.4 }]}>S</Text>
+    const IncidentMarker = ({ size }) => (
+      <View style={[styles.markerContainer, { width: size, height: size }]}>
+        <View style={[styles.incidentMarker, { width: size, height: size }]}>
+          <View style={styles.incidentIcon}>
+            <Text style={[styles.markerText, { fontSize: size * 0.4 }]}>!</Text>
+          </View>
         </View>
+        <View style={[styles.markerShadow, { width: size, height: size }]} />
       </View>
-      <View style={[styles.markerShadow, { width: size, height: size }]} />
-    </View>
-  );
+    );
 
-  const IncidentMarker = ({ size }) => (
-    <View style={[styles.markerContainer, { width: size, height: size }]}>
-      <View style={[styles.incidentMarker, { width: size, height: size }]}>
-        <View style={styles.incidentIcon}>
-          <Text style={[styles.markerText, { fontSize: size * 0.4 }]}>!</Text>
+    const LiveLocationMarker = ({ size = 24 }) => (
+      <View style={[styles.markerContainer, { width: size, height: size }]}>
+        <View style={[styles.liveMarker, { width: size, height: size }]}>
+          <View
+            style={[
+              styles.liveMarkerInner,
+              {
+                width: size * 0.6,
+                height: size * 0.6,
+              },
+            ]}
+          />
         </View>
+        <View
+          style={[
+            styles.liveMarkerPulse,
+            { width: size * 1.5, height: size * 1.5 },
+          ]}
+        />
       </View>
-      <View style={[styles.markerShadow, { width: size, height: size }]} />
-    </View>
-  );
+    );
 
-  const LiveLocationMarker = ({ size = 24 }) => (
-    <View style={[styles.markerContainer, { width: size, height: size }]}>
-      <View style={[styles.liveMarker, { width: size, height: size }]}>
-        <View style={[styles.liveMarkerInner, { 
-          width: size * 0.6, 
-          height: size * 0.6 
-        }]} />
-      </View>
-      <View style={[styles.liveMarkerPulse, { width: size * 1.5, height: size * 1.5 }]} />
-    </View>
-  );
+    return (
+      <View style={styles.container}>
+        <MapView
+          provider={PROVIDER_GOOGLE}
+          style={styles.map}
+          initialRegion={{
+            latitude,
+            longitude,
+            latitudeDelta: 0.003,
+            longitudeDelta: 0.003,
+          }}
+          zoomControlEnabled={true}
+          zoomEnabled={true}
+          scrollEnabled={true}
+          onRegionChangeComplete={region => {
+            const zoom = getZoomLevel(region);
+            setZoomLevel(zoom);
+            setMarkerSize(getMarkerSize(zoom));
+            console.log(
+              `Zoom Level: ${zoom}, Marker Size: ${getMarkerSize(zoom)}`,
+            );
+          }}
+        >
+          {/* Shelter Markers */}
+          {shelters
+            .filter(shelter => {
+              const shelterLat = shelter.location.coordinates[1];
+              const shelterLng = shelter.location.coordinates[0];
 
-  return (
-    <View style={styles.container}>
-      <MapView
-        provider={PROVIDER_GOOGLE}
-        style={styles.map}
-        initialRegion={{
-          latitude,
-          longitude,
-          latitudeDelta: 0.003,
-          longitudeDelta: 0.003,
-        }}
-        zoomControlEnabled={true}
-        zoomEnabled={true}
-        scrollEnabled={true}
-        onRegionChangeComplete={region => {
-          const zoom = getZoomLevel(region);
-          setZoomLevel(zoom);
-          setMarkerSize(getMarkerSize(zoom));
-          console.log(`Zoom Level: ${zoom}, Marker Size: ${getMarkerSize(zoom)}`);
-        }}
-      >
-        {/* Shelter Markers */}
-        {shelters
-          .filter(shelter => {
-            const shelterLat = shelter.location.coordinates[1];
-            const shelterLng = shelter.location.coordinates[0];
+              // Check if this shelter is within 500m of any incident
+              const isNearAnyIncident = incidents.some(incident => {
+                const incidentLat = incident.location.coordinates[1];
+                const incidentLng = incident.location.coordinates[0];
+                return isWithinDistance(
+                  shelterLat,
+                  shelterLng,
+                  incidentLat,
+                  incidentLng,
+                  500, // 500 meters
+                );
+              });
 
-            // Check if this shelter is within 500m of any incident
-            const isNearAnyIncident = incidents.some(incident => {
-              const incidentLat = incident.location.coordinates[1];
-              const incidentLng = incident.location.coordinates[0];
-              return isWithinDistance(
-                shelterLat,
-                shelterLng,
-                incidentLat,
-                incidentLng,
-                500 // 500 meters
-              );
-            });
-
-            // Keep shelter only if it's NOT near any incident
-            return !isNearAnyIncident;
-          })
-          .map((shelter, index) => (
-            <Marker
-              key={`shelter-${index}`}
-              coordinate={{
-                latitude: shelter.location.coordinates[1],
-                longitude: shelter.location.coordinates[0],
-              }}
-              anchor={{ x: 0.5, y: 0.5 }}
-            >
-              <ShelterMarker size={markerSize} />
-              <Callout>
-                <View style={styles.calloutContainer}>
-                  <Text style={styles.calloutTitle}>{shelter.title}</Text>
-                  {shelter.capacity && (
-                    <Text style={styles.calloutText}>
-                      Capacity: {shelter.capacity}
-                    </Text>
-                  )}
-                  <Text style={styles.calloutLabel}>Safe Zone</Text>
-                </View>
-              </Callout>
-            </Marker>
-          ))}
-
-        {/* Incident Markers */}
-        {incidents.map((incident, index) => {
-          const coords = {
-            latitude: incident.location.coordinates[1],
-            longitude: incident.location.coordinates[0],
-          };
-
-          return (
-            <React.Fragment key={`incident-${index}`}>
+              // Keep shelter only if it's NOT near any incident
+              return !isNearAnyIncident;
+            })
+            .map((shelter, index) => (
               <Marker
-                coordinate={coords}
+                key={`shelter-${index}`}
+                coordinate={{
+                  latitude: shelter.location.coordinates[1],
+                  longitude: shelter.location.coordinates[0],
+                }}
                 anchor={{ x: 0.5, y: 0.5 }}
               >
-                <IncidentMarker size={markerSize} />
+                <ShelterMarker size={markerSize} />
                 <Callout>
                   <View style={styles.calloutContainer}>
-                    <Text style={styles.calloutTitle}>Emergency Incident</Text>
-                    <Text style={[styles.calloutText, styles.typeText]}>
-                      Type: {types.find(type => type._id === incident.typeId)?.name || 'Unknown'}
-                    </Text>
-                    <Text style={styles.calloutText}>{incident.description}</Text>
-                    <Text style={[styles.calloutText, styles.severityText]}>
-                      Severity: {incident.severity}
-                    </Text>
+                    <Text style={styles.calloutTitle}>{shelter.title}</Text>
+                    {shelter.capacity && (
+                      <Text style={styles.calloutText}>
+                        Capacity: {shelter.capacity}
+                      </Text>
+                    )}
+                    <Text style={styles.calloutLabel}>Safe Zone</Text>
                   </View>
                 </Callout>
               </Marker>
+            ))}
 
-              {/* Danger zone circle */}
-              <Circle
-                center={coords}
-                radius={500}
-                strokeWidth={2}
-                strokeColor="rgba(255,0,0,0.7)"
-                fillColor="rgba(255,0,0,0.2)"
-              />
-            </React.Fragment>
-          );
-        })}
+          {/* Incident Markers */}
+          {incidents.map((incident, index) => {
+            const coords = {
+              latitude: incident.location.coordinates[1],
+              longitude: incident.location.coordinates[0],
+            };
 
-        {/* Live Location Marker */}
-        {latitude && longitude && (
-          <Marker
-            key="live-location"
-            coordinate={{ latitude, longitude }}
-            anchor={{ x: 0.5, y: 0.5 }}
-          >
-            <LiveLocationMarker size={markerSize} />
-            <Callout>
-              <View style={styles.calloutContainer}>
-                <Text style={styles.calloutTitle}>Your Location</Text>
-                <Text style={styles.calloutText}>You are here</Text>
-              </View>
-            </Callout>
-          </Marker>
-        )}
-      </MapView>
-    </View>
-  );
-}, (prevProps, nextProps) => {
-  // Custom comparison to prevent unnecessary re-renders
-  return (
-    prevProps.latitude === nextProps.latitude &&
-    prevProps.longitude === nextProps.longitude &&
-    prevProps.shelters?.length === nextProps.shelters?.length &&
-    prevProps.incidents?.length === nextProps.incidents?.length
-  );
-});
+            return (
+              <React.Fragment key={`incident-${index}`}>
+                <Marker coordinate={coords} anchor={{ x: 0.5, y: 0.5 }}>
+                  <IncidentMarker size={markerSize} />
+                  <Callout>
+                    <View style={styles.calloutContainer}>
+                      <Text style={styles.calloutTitle}>
+                        Emergency Incident
+                      </Text>
+                      <Text style={[styles.calloutText, styles.typeText]}>
+                        Type:{' '}
+                        {types.find(type => type._id === incident.typeId)
+                          ?.name || 'Unknown'}
+                      </Text>
+                      <Text style={styles.calloutText}>
+                        {incident.description}
+                      </Text>
+                      <Text style={[styles.calloutText, styles.severityText]}>
+                        Severity: {incident.severity}
+                      </Text>
+                    </View>
+                  </Callout>
+                </Marker>
+
+                {/* Danger zone circle */}
+                <Circle
+                  center={coords}
+                  radius={500}
+                  strokeWidth={2}
+                  strokeColor="rgba(255,0,0,0.7)"
+                  fillColor="rgba(255,0,0,0.2)"
+                />
+              </React.Fragment>
+            );
+          })}
+
+          {/* Live Location Marker */}
+          {latitude && longitude && (
+            <Marker
+              key="live-location"
+              coordinate={{ latitude, longitude }}
+              anchor={{ x: 0.5, y: 0.5 }}
+            >
+              <LiveLocationMarker size={markerSize} />
+              <Callout>
+                <View style={styles.calloutContainer}>
+                  <Text style={styles.calloutTitle}>Your Location</Text>
+                  <Text style={styles.calloutText}>You are here</Text>
+                </View>
+              </Callout>
+            </Marker>
+          )}
+        </MapView>
+      </View>
+    );
+  },
+  (prevProps, nextProps) => {
+    // Custom comparison to prevent unnecessary re-renders
+    return (
+      prevProps.latitude === nextProps.latitude &&
+      prevProps.longitude === nextProps.longitude &&
+      prevProps.shelters?.length === nextProps.shelters?.length &&
+      prevProps.incidents?.length === nextProps.incidents?.length
+    );
+  },
+);
 
 const styles = StyleSheet.create({
   container: {

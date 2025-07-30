@@ -1,9 +1,8 @@
-import axios from "axios";
-const BASE_URL = "http://10.0.2.2:3000/api/shelters";
+import api from "./Interceptor";
 
 export const getShelters = async () => {
     try {
-        const response = await axios.get(BASE_URL);
+        const response = await api.get('/shelters');
         return response.data;
     } catch (error) {
         console.error("Error fetching shelters:", error);

@@ -20,8 +20,8 @@ app.use(cors());
 // Routes
 app.use("/api/auth", authToken, authRole(1), authRoutes);
 app.use("/api/incidents", authToken, incidentRoutes);
-app.use("/api/shelters", shelterRoutes);
-app.use("/api/types", typeRoutes);
+app.use("/api/shelters", authToken, shelterRoutes);
+app.use("/api/types", authToken, typeRoutes);
 app.post("/guestToken", guestController.guestToken);
 // app.use("/api/fcm", authToken, fcmRoutes);
 app.post("/api/logout", authToken, authRole(0), authController.logout);
