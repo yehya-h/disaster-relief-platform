@@ -41,24 +41,25 @@ class FinalOutput(BaseModel):
 
 def fetch_disaster_types():
     print("Fetching Disaster Types")
-    NODE_API_IP = os.getenv("NODE_API_IP")
-    NODE_API_PORT = os.getenv("NODE_API_PORT")
+    # NODE_API_IP = os.getenv("NODE_API_IP")
+    # NODE_API_PORT = os.getenv("NODE_API_PORT")
     global types
 
-    if not NODE_API_IP or not NODE_API_PORT:
-        raise EnvironmentError("NODE_API_IP or NODE_API_PORT is not set in environment variables.")
+    # if not NODE_API_IP or not NODE_API_PORT:
+    #     raise EnvironmentError("NODE_API_IP or NODE_API_PORT is not set in environment variables.")
 
-    url = f"http://{NODE_API_IP}:{NODE_API_PORT}/api/types"
+    # url = f"http://{NODE_API_IP}:{NODE_API_PORT}/api/types"
 
     try:
-        response = requests.get(url)
-        response.raise_for_status()
-        data = response.json()
+        # response = requests.get(url)
+        # response.raise_for_status()
+        # data = response.json()
 
-        # Extract only the 'name' fields
-        type_names = [item["name"] for item in data if "name" in item]
-        print(f"type_names: {type_names}")
-        return type_names
+        # # Extract only the 'name' fields
+        # type_names = [item["name"] for item in data if "name" in item]
+        # print(f"type_names: {type_names}")
+        # return type_names
+        return ["fire", "flood", "earthquake", "tornado", "volcano", "car crash"]
 
     except requests.exceptions.RequestException as e:
         print(f"Failed to fetch types: {e}")
