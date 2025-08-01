@@ -1,5 +1,6 @@
 const axios = require('axios');
 const FormData = require('form-data');
+require('dotenv').config();
 // const fs = require('fs');
 
 class AnalyzerService {
@@ -18,7 +19,13 @@ class AnalyzerService {
     formData.append('description', description);
 
     try {
-      const response = await axios.post('http://127.0.0.1:5000/analyze', formData, {
+      let agentUrl = process.env.AGENT_API_ENDPOINT;
+
+      if (!agentUrl && process.env.AGENT_API_IP && process.env.AGENT_API_PORT) {
+        agentUrl = `http://${process.env.AGENT_API_IP}:${process.env.AGENT_API_PORT}/analyze`;
+      }
+
+      const response = await axios.post(agentUrl, formData, {
         headers: {
           ...formData.getHeaders(),
           'Content-Type': 'multipart/form-data'

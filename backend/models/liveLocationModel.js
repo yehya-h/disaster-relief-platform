@@ -16,6 +16,8 @@ const liveLocationSchema = mongoose.Schema({
     deviceId: {
         type: String,
         required: true,
+        index: true,
+        unique: true,
     },
     timestamp: {
         type: Date,
