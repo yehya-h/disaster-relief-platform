@@ -1,6 +1,5 @@
 import api from './Interceptor';
 import axios from 'axios';
-import { NODE_API_IP, NODE_API_PORT } from '@env';
 
 export const registerUser = async userData => {
   console.log('fct: registerUser --- userData: ', userData);
@@ -11,6 +10,12 @@ export const registerUser = async userData => {
 export const loginUser = async userData => {
   console.log('fct: loginUser --- userData: ', userData);
   const response = await api.post('/auth/login', userData);
+  return response.data;
+};
+
+export const resendVerification = async email => {
+  console.log('fct: resendVerification --- email: ', email);
+  const response = await api.post('/auth/resend-verification', { email });
   return response.data;
 };
 

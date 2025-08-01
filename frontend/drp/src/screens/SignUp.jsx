@@ -16,10 +16,22 @@ export default function SignUpScreen({ navigation, ...others }) {
     dispatch(clearSignupData());
   }, [dispatch]);
 
+  // // Clear form when navigating back from location selection
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      // Reset form when screen comes into focus
+      if (navigation.getState().routes.find(route => route.name === 'SignUp')) {
+        // Form will be reset by Formik's initialValues
+      }
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
   let userSchema = yup.object({
     fname: yup.string().required("First name is required"),
     lname: yup.string().required("Last name is required"),
-    email: yup.string().required("Email is required").email("Invalid email"),
+    email: yup.string().required("Email is required").email("Invalid email").matches(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "Invalid email"),
     password: yup.string().min(6, "Password can't be less than 6").required("Password is required"),
     cPassword: yup.string().oneOf([yup.ref('password')], "Passwords does not match").required("Confirm Password is required"),
   });

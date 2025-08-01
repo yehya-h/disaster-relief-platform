@@ -27,6 +27,24 @@ const userSchema = mongoose.Schema(
       type: Number,
       required: true,
     },
+    emailVerified: { 
+      type: Boolean, 
+      default: false 
+    },
+    resendCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 3
+    },
+    lastResendTime: {
+      type: Date,
+      default: null
+    },
+    firebaseUid: {
+      type: String,
+      required: false,
+    },
   },
   {
     toJSON: { virtuals: true }, // Ensure virtuals are included in responses

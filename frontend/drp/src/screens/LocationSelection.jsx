@@ -2,13 +2,10 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import LocationPicker from '../components/LocationPicker';
 import { registerUser } from '../api/AuthApi';
-import { getUserById } from '../api/UserApi';
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import jwtDecode from "jwt-decode";
 import { useDispatch, useSelector } from 'react-redux';
-import { updateUserDetails } from '../redux/UserSlice';
 import { addLocation, removeLocation, updateLocation, clearSignupData } from '../redux/signupLocationsSlice';
-import { showSuccessToast } from '../utils/toast';
+import { sendEmailVerification, signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../utils/firebase';
 
 const LocationSelection = ({ navigation, route }) => {
   const [showLocationPicker, setShowLocationPicker] = useState(false);
@@ -18,7 +15,6 @@ const LocationSelection = ({ navigation, route }) => {
 
   // Get locations and user data from Redux state
   const { locations, userData } = useSelector((state) => state.signupLocations);
-  const { setIsLoggedIn } = route.params;
 
   const handleLocationSelected = (locationData) => {
     if (editingLocationIndex !== null) {
@@ -70,34 +66,47 @@ const LocationSelection = ({ navigation, route }) => {
       const res = await registerUser(registerData);
       console.log("Signup response:", res);
 
-      if (!res || !res.token) {
+      if (!res || !res.message) {
         Alert.alert('Signup failed', 'Invalid response from server');
         return;
       }
 
-      await AsyncStorage.setItem('token', res.token);
+      if (res.status == 201) {
+        
+        try {
+          // Sign in user immediately after backend registration
+          const userCredential = await signInWithEmailAndPassword(auth, userData.email, userData.password);
+          const user = userCredential.user;
 
-      const decoded = jwtDecode(res.token);
-      console.log("user ", decoded, " ", res.token);
+          // Send email verification
+          await sendEmailVerification(user);
 
-      // Fetch user details and update Redux
-      try {
-        const userDetails = await getUserById(decoded.id);
-        dispatch(updateUserDetails({
-          fname: userDetails.fname,
-          lname: userDetails.lname,
-          email: userDetails.email
-        }));
-      } catch (error) {
-        console.error('Error fetching user details:', error);
+          Alert.alert(
+            'Registration Successful! 🎉',
+            'Your account has been created successfully! Please check your email for a verification link. Once verified, you can login with your credentials.',
+            [
+              {
+                text: 'OK',
+                onPress: () => {
+                  // Navigate to login screen with pre-filled email and password
+                  navigation.navigate('SignIn', {
+                    prefillEmail: userData.email,
+                    prefillPassword: userData.password
+                  });
+                }
+              }
+            ]
+          );
+
+          await auth.signOut();
+
+        } catch (firebaseError) {
+          console.error('Firebase sign-in or verification error:', firebaseError);
+          Alert.alert('Error', 'Could not send verification email. Please try logging in.');
+        }
       }
-
       // Clear signup data from Redux
       dispatch(clearSignupData());
-
-      // Set login state and navigate to main app
-      setIsLoggedIn(true);
-      showSuccessToast('Signup successful!');
 
     } catch (error) {
       console.error('Error during signup:', error);
@@ -170,7 +179,7 @@ const LocationSelection = ({ navigation, route }) => {
 
         <TouchableOpacity
           style={[
-            styles.submitButton, 
+            styles.submitButton,
             (isSubmitting || locations.length === 0) && styles.submitButtonDisabled
           ]}
           onPress={handleSubmit}
