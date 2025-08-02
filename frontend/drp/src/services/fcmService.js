@@ -16,22 +16,25 @@ async function requestNotificationPermission() {
 
 async function getFcmToken() {
   try {
-    const token = await messaging().getToken();
-    console.log('FCM Token:', token);
+    const status = await messaging().hasPermission(); // Or check manually
+    if (status === 1) {
+      const token = await messaging().getToken();
+      console.log('FCM Token:', token);
 
-    // const storedToken = await AsyncStorage.getItem('fcmToken');
-    // if (storedToken === currentToken) {
-    //   console.log('Token unchanged, no need to resend.');
-    //   return;
-    // }
+      // const storedToken = await AsyncStorage.getItem('fcmToken');
+      // if (storedToken === currentToken) {
+      //   console.log('Token unchanged, no need to resend.');
+      //   return;
+      // }
 
-    const deviceId = await DeviceInfo.getUniqueId();
-    console.log('Device ID:', deviceId);
+      const deviceId = await DeviceInfo.getUniqueId();
+      console.log('Device ID:', deviceId);
 
-    await saveFcmToken({ fcmToken: token, deviceId });
+      await saveFcmToken({ fcmToken: token, deviceId });
 
-    // await AsyncStorage.setItem('fcmToken', currentToken);
-    // console.log('Token saved to AsyncStorage');
+      // await AsyncStorage.setItem('fcmToken', currentToken);
+      // console.log('Token saved to AsyncStorage');
+    }
   } catch (error) {
     console.error('Failed to get FCM token:', error);
     // return null;

@@ -22,8 +22,8 @@ function App() {
   useEffect(() => {
     async function setupNotifications() {
       const granted = await requestNotificationPermission();
-      if (granted) {
-        await getFcmToken();
+      if (!granted) {
+        console.log('Notification permission not granted.');
       }
     }
     setupNotifications();
