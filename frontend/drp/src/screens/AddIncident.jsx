@@ -117,7 +117,30 @@ export default function AddIncident() {
       if (result?.status === 200) {
         Alert.alert(result.data?.message);
       } else if (result?.status === 201) {
-        Alert.alert('Thank you', 'Your report is submitted succefully.');
+        Alert.alert(
+          'Thank you',
+          'Your report is submitted succefully.',
+          result,
+        );
+        //   Alert.alert(
+        //     'Are you sure?',
+        //     'Do you want to log out?',
+        //     [
+        //       {
+        //         text: 'No',
+        //         onPress: () => console.log('User canceled'),
+        //         style: 'cancel',
+        //       },
+        //       {
+        //         text: 'Yes',
+        //         onPress: () => {
+        //           console.log('User confirmed');
+        //           // Add your logic here, like logout()
+        //         },
+        //       },
+        //     ],
+        //     { cancelable: false },
+        //   );
       }
       resetForm();
       setImagePreview(null);

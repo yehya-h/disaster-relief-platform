@@ -28,6 +28,15 @@ function App() {
     }
     setupNotifications();
   }, []);
+
+  useEffect(() => {
+    const unsubscribeRefresh = messaging().onTokenRefresh(newToken => {
+      console.log('FCM token refreshed:', newToken);
+      getFcmToken();
+    });
+    return unsubscribeRefresh;
+  }, []);
+
   useEffect(() => {
     const unsubscribe = messaging().onMessage(async remoteMessage => {
       Alert.alert(

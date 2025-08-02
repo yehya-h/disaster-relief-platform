@@ -5,6 +5,7 @@ const UserLocation = require("../models/userLocationModel");
 const FCM = require("../models/fcmModel");
 const Notification = require("../models/notificationModel");
 const mongoose = require("mongoose");
+const { Types } = mongoose;
 
 // Radius in meters
 const SEARCH_RADIUS = 1000;
@@ -32,6 +33,7 @@ async function getUsersNearLocation(location) {
       },
     },
   }).lean();
+
   console.log(`👥 Found ${guests.length} guests near location.`);
   guests.forEach((guest, i) => {
     console.log(
@@ -51,10 +53,12 @@ async function getUsersNearLocation(location) {
     },
     timestamp: { $gte: hourAgo },
   }).lean();
+
   console.log(`👤 Found ${liveLocUsers.length} liveLocUsers near location.`);
   liveLocUsers.forEach((user, i) => {
     console.log(
-      `  LiveLocUser[${i}]: userId=${user.userId}, deviceId=${user.deviceId
+      `  LiveLocUser[${i}]: userId=${user.userId}, deviceId=${
+        user.deviceId
       }, location=${JSON.stringify(user.location)}, timestamp=${user.timestamp}`
     );
   });
@@ -68,6 +72,7 @@ async function getUsersNearLocation(location) {
       },
     },
   }).lean();
+
   console.log(`👥 Found ${manualUsers.length} manualUsers near location.`);
   manualUsers.forEach((user, i) => {
     console.log(
@@ -82,19 +87,21 @@ async function getUsersNearLocation(location) {
 
   liveLocUsers.forEach((entry) => {
     if (entry.userId && entry.deviceId) {
-      userIds.add(new mongoose.Types.ObjectId(entry.userId));
+      userIds.add(entry.userId);
     }
   });
 
   manualUsers.forEach((entry) => {
-    if (entry.userId) {
-      userIds.add(new mongoose.Types.ObjectId(entry.userId));
+    if (entry.userId && Types.ObjectId.isValid(entry.userId)) {
+      userIds.add(entry.userId);
+    } else {
+      console.error("Invalid userId skipped:", entry.userId);
     }
   });
 
   guests.forEach((entry) => {
     if (entry._id) {
-      guestIds.add(new mongoose.Types.ObjectId(entry._id));
+      guestIds.add(entry._id);
     }
   });
 
@@ -104,13 +111,13 @@ async function getUsersNearLocation(location) {
 
   const userFcmRecords = await FCM.find({
     userId: { $in: Array.from(userIds) },
-    userType: 'User',
+    // userType: "User",
   }).lean();
   console.log(`🔷 Found ${userFcmRecords.length} FCM records for users.`);
 
   const guestFcmRecords = await FCM.find({
     userId: { $in: Array.from(guestIds) },
-    userType: 'Guest',
+    // userType: "Guest",
   }).lean();
   console.log(`🔷 Found ${guestFcmRecords.length} FCM records for guests.`);
 
