@@ -12,6 +12,7 @@ import React, { useState } from 'react';
 import { showSuccessToast } from '../utils/toast';
 import { sendEmailVerification, signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../utils/firebase';
+import { UserDataHelper } from '../services/UserDataHelper';
 
 export default function SignIn({ navigation, route, ...others }) {
   const dispatch = useDispatch();
@@ -136,7 +137,8 @@ export default function SignIn({ navigation, route, ...others }) {
       console.log("Login response:", res);
 
       if (res && res.token) {
-        await AsyncStorage.setItem('token', res.token);
+        // await AsyncStorage.setItem('token', res.token);
+        await UserDataHelper.setAuthToken(res.token);
         const decoded = jwtDecode(res.token);
         console.log("user ", decoded, " ", res.token);
 

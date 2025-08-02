@@ -17,7 +17,7 @@ async function saveFcmToken(req, res) {
     }
 
     const updatedFcm = await FCM.findOneAndUpdate(
-      { deviceId, userType },
+      { deviceId },
       {
         userId: req.user.id,
         userType,

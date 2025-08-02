@@ -3,12 +3,13 @@ import DisasterMap from '../components/DisasterMap';
 import { fetchShelters } from '../redux/shelterSlice';
 import { fetchLatestIncidents } from '../redux/incidentSlice';
 import { useDispatch, useSelector } from 'react-redux';
-import { getCurrentLocation } from '../services/location/locationService';
+// import { getCurrentLocation } from '../services/location/locationService';
 import { checkAndRequestLocationPermission } from '../services/permissions/locationPermissionService';
 // import { getCountryNameFromCoords } from '../services/geocoding/geocodingService';
 import { Image, View, ActivityIndicator, Text, StyleSheet } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useDrawerStatus } from '@react-navigation/drawer';
+import { LocationService } from '../services/LocationService';
 
 export default function MapScreen() {
   const [location, setLocation] = useState(null);
@@ -18,15 +19,17 @@ export default function MapScreen() {
   const [mapKey, setMapKey] = useState(0);
   const [dataLoading, setDataLoading] = useState(true);
   const [isMapReady, setIsMapReady] = useState(false);
-  const drawerStatus = useDrawerStatus();
+  const role = useSelector(state => state.user.role);
+  if (role && role !== 1) {
+    const drawerStatus = useDrawerStatus();
 
-  useEffect(() => {
-    if (drawerStatus === 'closed') {
-      // Drawer just closed, refresh the map
-      setMapKey(prev => prev + 1);
-    }
-  }, [drawerStatus]);
-
+    useEffect(() => {
+      if (drawerStatus === 'closed') {
+        // Drawer just closed, refresh the map
+        setMapKey(prev => prev + 1);
+      }
+    }, [drawerStatus]);
+  }
   const shelters = useSelector(state => state.shelter.shelters);
   const incidents = useSelector(state => state.incident.incidents);
   const dispatch = useDispatch();
@@ -44,8 +47,8 @@ export default function MapScreen() {
           setLocationLoading(false);
           return;
         }
-
-        const loc = await getCurrentLocation();
+        const locationService = LocationService.getInstance();
+        const loc = await locationService.getCurrentLocation();
         if (loc) {
           setLocation(loc);
           console.log('Location fetched:', loc);

@@ -13,6 +13,9 @@ import { getUserById } from '../api/UserApi';
 import DeviceInfo from 'react-native-device-info';
 import { getCurrentLocation } from '../services/location/locationService';
 import TabNavigator from './TabNavigator';
+import { UserDataHelper } from '../services/UserDataHelper';
+import { LocationService } from '../services/LocationService';
+
 
 export default function AppNavigator() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -64,7 +67,8 @@ export default function AppNavigator() {
           console.log("new token: ", response.token);
           if (response.token) {
             const decoded = jwtDecode(response.token);
-            await AsyncStorage.setItem("token", response.token);
+            // await AsyncStorage.setItem("token", response.token);
+            await UserDataHelper.setAuthToken(response.token);
             console.log("non existing token: ", "role:", decoded, " ", response.token);
             dispatch(addUser({
               userId: decoded.id,
@@ -86,6 +90,31 @@ export default function AppNavigator() {
     };
     checkToken();
   }, []);
+
+    useEffect(() => {
+      const initLocationService = async () => {
+        const locationService = LocationService.getInstance();
+        
+        const started = await locationService.startBackgroundLocationService();
+        if (started) {
+          console.log('Background location service started');
+          
+          // Optional: Get location updates every 15 seconds
+          // locationService.getLocationUpdates((location) => {
+          //   console.log('Foreground location:', location);
+          // });
+        } else {
+          console.warn('Background location service failed to start');
+        }
+  
+        return () => {
+          locationService.stopBackgroundLocationService();
+          // locationService.stopLocationUpdates();
+        };
+      };
+  
+      initLocationService();
+    }, []);
 
   if (isLoading) {
     return (

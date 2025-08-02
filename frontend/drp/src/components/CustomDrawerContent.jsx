@@ -12,6 +12,7 @@ import { logoutUser } from '../api/AuthApi';
 import { getCurrentLocation } from '../services/location/locationService';
 import DeviceInfo from 'react-native-device-info';
 import { removeUser, addUser, updateUserDetails } from '../redux/UserSlice';
+import { UserDataHelper } from '../services/UserDataHelper';
 
 const CustomDrawerContent = (props) => {
   const dispatch = useDispatch();
@@ -54,8 +55,8 @@ const CustomDrawerContent = (props) => {
               const response = await logoutUser(logoutData);
               
               if (response && response.token) {
-                await AsyncStorage.setItem('token', response.token);
-
+                // await AsyncStorage.setItem('token', response.token);
+                await UserDataHelper.setAuthToken(response.token);
                 dispatch(removeUser())
                 
                 const jwtDecode = require('jwt-decode');
@@ -68,7 +69,8 @@ const CustomDrawerContent = (props) => {
                 }));
               } else {
                 // Clear local storage if no token returned
-                await AsyncStorage.removeItem('token');
+                // await AsyncStorage.removeItem('token');
+                await UserDataHelper.clearUserData();
                 dispatch(removeUser());
               }
               

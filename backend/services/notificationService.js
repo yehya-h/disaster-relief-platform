@@ -7,14 +7,18 @@ const Notification = require("../models/notificationModel");
 const mongoose = require("mongoose");
 
 // Radius in meters
-const SEARCH_RADIUS = 500;
+const SEARCH_RADIUS = 1000;
 
 // Get users/guests near incident location
 async function getUsersNearLocation(location) {
+  console.log("🟢 getUsersNearLocation called with location:", location);
+
   const geometry = {
     type: "Point",
     coordinates: location.coordinates,
   };
+
+  console.log("🔷 Using geometry:", geometry);
 
   const now = new Date();
   const hourAgo = new Date(now.getTime() - 60 * 60 * 1000);
@@ -28,6 +32,14 @@ async function getUsersNearLocation(location) {
       },
     },
   }).lean();
+  console.log(`👥 Found ${guests.length} guests near location.`);
+  guests.forEach((guest, i) => {
+    console.log(
+      `  Guest[${i}]: _id=${guest._id}, liveLocation=${JSON.stringify(
+        guest.liveLocation
+      )}`
+    );
+  });
 
   // 2. Users with recent LiveLocation
   const liveLocUsers = await LiveLocation.find({
@@ -39,6 +51,13 @@ async function getUsersNearLocation(location) {
     },
     timestamp: { $gte: hourAgo },
   }).lean();
+  console.log(`👤 Found ${liveLocUsers.length} liveLocUsers near location.`);
+  liveLocUsers.forEach((user, i) => {
+    console.log(
+      `  LiveLocUser[${i}]: userId=${user.userId}, deviceId=${user.deviceId
+      }, location=${JSON.stringify(user.location)}, timestamp=${user.timestamp}`
+    );
+  });
 
   // 3. Users with manually saved user locations
   const manualUsers = await UserLocation.find({
@@ -49,43 +68,58 @@ async function getUsersNearLocation(location) {
       },
     },
   }).lean();
+  console.log(`👥 Found ${manualUsers.length} manualUsers near location.`);
+  manualUsers.forEach((user, i) => {
+    console.log(
+      `  ManualUser[${i}]: userId=${user.userId}, location=${JSON.stringify(
+        user.location
+      )}`
+    );
+  });
 
   const userIds = new Set();
   const guestIds = new Set();
 
   liveLocUsers.forEach((entry) => {
     if (entry.userId && entry.deviceId) {
-      userIds.add(entry.userId.toString());
+      userIds.add(new mongoose.Types.ObjectId(entry.userId));
     }
   });
 
   manualUsers.forEach((entry) => {
     if (entry.userId) {
-      userIds.add(entry.userId.toString());
+      userIds.add(new mongoose.Types.ObjectId(entry.userId));
     }
   });
 
   guests.forEach((entry) => {
     if (entry._id) {
-      guestIds.add(entry._id.toString());
+      guestIds.add(new mongoose.Types.ObjectId(entry._id));
     }
   });
 
+  console.log(
+    `🔶 Aggregated ${userIds.size} unique userIds and ${guestIds.size} unique guestIds`
+  );
+
   const userFcmRecords = await FCM.find({
     userId: { $in: Array.from(userIds) },
-    userType: "User",
+    userType: 'User',
   }).lean();
+  console.log(`🔷 Found ${userFcmRecords.length} FCM records for users.`);
 
-  // Find FCM tokens for guests
   const guestFcmRecords = await FCM.find({
     userId: { $in: Array.from(guestIds) },
-    userType: "Guest",
+    userType: 'Guest',
   }).lean();
+  console.log(`🔷 Found ${guestFcmRecords.length} FCM records for guests.`);
 
   return { userFcmRecords, guestFcmRecords, userIds };
 }
 
 async function triggerNotification(location, type, description, incidentId) {
+  console.log("🟢 triggerNotification called");
+
   try {
     const { userFcmRecords, guestFcmRecords, userIds } =
       await getUsersNearLocation(location);
@@ -95,9 +129,14 @@ async function triggerNotification(location, type, description, incidentId) {
     const guestTokens = guestFcmRecords.map((rec) => rec.fcmToken);
 
     // Combine all tokens
-    const tokens = [...userTokens, ...guestTokens];
+    const tokens = [...userTokens, ...guestTokens].filter(Boolean);
 
-    if (tokens.length === 0) return; // Nothing to send
+    console.log(`🔔 Sending notification to ${tokens.length} tokens.`);
+
+    if (tokens.length === 0) {
+      console.log("⚠️ No tokens found. Exiting triggerNotification.");
+      return; // Nothing to send
+    }
 
     const message = {
       tokens: tokens,
@@ -112,9 +151,16 @@ async function triggerNotification(location, type, description, incidentId) {
       },
     };
 
-    // const response = await admin.messaging().sendMulticast(message);
-    const response = await admin.messaging().sendEachForMulticast(message);
-    console.log(`${response.successCount} notifications sent successfully.`);
+    let response;
+    try {
+      response = await admin.messaging().sendEachForMulticast(message);
+      console.log(
+        `✅ ${response.successCount} notifications sent successfully.`
+      );
+    } catch (fcmError) {
+      console.error("🔥 Firebase sendEachForMulticast error:", fcmError);
+      throw fcmError; // Re-throw to be caught by outer catch
+    }
 
     if (userIds.size > 0) {
       const notifications = Array.from(userIds).map((userId) => ({
@@ -123,31 +169,30 @@ async function triggerNotification(location, type, description, incidentId) {
         notificationType: "nearby_incident",
       }));
 
-      await Notification.insertMany(notifications, { ordered: false });
-      console.log("Notifications saved to DB for users.");
+      try {
+        await Notification.insertMany(notifications, { ordered: false });
+        console.log("💾 Notifications saved to DB for users.");
+      } catch (dbError) {
+        console.error("🔥 Error saving notifications to DB:", dbError);
+      }
     }
 
     response.responses.forEach((resp, idx) => {
       if (resp.success) {
-        console.log(`Notification sent to ${tokens[idx]}`);
+        console.log(`Notification sent to token: ${tokens[idx]}`);
       } else {
-        console.error(`Failed to send to ${tokens[idx]}:`, resp.error);
+        console.error(
+          `Failed to send to token: ${tokens[idx]} - Error:`,
+          resp.error
+        );
       }
     });
 
-    console.log(`${response.successCount} messages were sent successfully.`);
-
-    //   if (response.failureCount > 0) {
-    //     response.responses.forEach((resp, idx) => {
-    //       if (!resp.success) {
-    //         console.error(`Token ${tokens[idx]} failed:`, resp.error.message);
-    //       }
-    //     });
-    //   }
-    // } catch (error) {
-    //   console.error("Error in triggerNotification:", error);
+    console.log(
+      `ℹ️ Total successCount: ${response.successCount}, failureCount: ${response.failureCount}`
+    );
   } catch (error) {
-    console.error("Error in triggerNotification:", error);
+    console.error("🔥 Error in triggerNotification:", error);
   }
 }
 

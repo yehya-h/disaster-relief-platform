@@ -23,7 +23,7 @@ export const resendVerification = async email => {
 export const guestToken = async userData => {
   console.log('fct: guestToken --- userData: ', userData);
   const response = await axios.post(
-    `http://10.0.2.2:3000/guestToken`,
+    `https://disaster-relief-platform-6q95.onrender.com/guestToken`,
     userData,
   );
   // const response = await axios.post(

@@ -25,7 +25,7 @@ const fcmSchema = new mongoose.Schema({
 });
 
 // Compound index for faster queries
-fcmSchema.index({ user: 1, userType: 1 });
+fcmSchema.index({ userId: 1, userType: 1 });
 fcmSchema.index({ deviceId: 1, userType: 1 });
 
 module.exports = mongoose.model('FCM', fcmSchema);

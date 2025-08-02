@@ -4,7 +4,7 @@ import { NODE_API_IP, NODE_API_PORT } from '@env';
 
 const api = axios.create({
     // baseURL: `http://${NODE_API_IP}:${NODE_API_PORT}/api`
-    baseURL: `http://10.0.2.2:3000/api`
+    baseURL: `https://disaster-relief-platform-6q95.onrender.com/api`
 });
 
 api.interceptors.request.use(async (config) => {
