@@ -18,12 +18,12 @@ import kotlinx.coroutines.*
 import android.provider.Settings
 
 class LocationForegroundService : Service() {
-    
+
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationRequest: LocationRequest
     private lateinit var locationCallback: LocationCallback
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    
+
     companion object {
         private const val NOTIFICATION_ID = 1001
         private const val CHANNEL_ID = "LocationServiceChannel"
@@ -61,8 +61,9 @@ class LocationForegroundService : Service() {
                 description = "Running location tracking in background"
                 setShowBadge(false)
             }
-            
-            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+            val notificationManager =
+                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
         }
     }
@@ -79,11 +80,12 @@ class LocationForegroundService : Service() {
     }
 
     private fun setupLocationRequest() {
-        locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, LOCATION_UPDATE_INTERVAL)
-            .setWaitForAccurateLocation(false)
-            .setMinUpdateIntervalMillis(LOCATION_UPDATE_INTERVAL)
-            .setMaxUpdateDelayMillis(LOCATION_UPDATE_INTERVAL * 2)
-            .build()
+        locationRequest =
+            LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, LOCATION_UPDATE_INTERVAL)
+                .setWaitForAccurateLocation(false)
+                .setMinUpdateIntervalMillis(LOCATION_UPDATE_INTERVAL)
+                .setMaxUpdateDelayMillis(LOCATION_UPDATE_INTERVAL * 2)
+                .build()
     }
 
     private fun setupLocationCallback() {
@@ -118,10 +120,10 @@ class LocationForegroundService : Service() {
         }
 
         Log.d("LocationService", "Location update: $locationData")
-        
+
         // Save locally first (as backup)
         saveLocationLocally(locationData.toString())
-        
+
         // Send to backend API
         sendLocationToAPI(location)
     }
@@ -178,7 +180,7 @@ class LocationForegroundService : Service() {
         try {
             val url = URL("$API_BASE_URL$API_ENDPOINT")
             val connection = url.openConnection() as HttpURLConnection
-            
+
             connection.apply {
                 requestMethod = "POST"
                 setRequestProperty("Content-Type", "application/json")
@@ -235,24 +237,24 @@ class LocationForegroundService : Service() {
 //    private fun getCustomDeviceId(): String {
 //        val sharedPref = getSharedPreferences("DeviceData", Context.MODE_PRIVATE)
 //        var deviceId = sharedPref.getString("deviceId", null)
-        
+
 //        if (deviceId == null) {
 //            // Generate a unique device ID
 //            deviceId = java.util.UUID.randomUUID().toString()
 //            sharedPref.edit().putString("deviceId", deviceId).apply()
 //        }
-        
+
 //        return deviceId
 //    }
 
     private fun getCustomDeviceId(): String {
-    // Option 1: Use Android ID (same across installs, but can change on factory reset)
-    return Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
-    
-    // Option 2: Use a combination approach
+        // Option 1: Use Android ID (same across installs, but can change on factory reset)
+        return Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
+
+        // Option 2: Use a combination approach
 //    val androidId = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
 //    return "device_${androidId}"
-}
+    }
 
     private fun getAuthToken(): String? {
         val sharedPref = getSharedPreferences("UserData", Context.MODE_PRIVATE)
@@ -269,7 +271,8 @@ class LocationForegroundService : Service() {
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .build()
 
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManager =
+            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.notify(NOTIFICATION_ID, notification)
     }
 

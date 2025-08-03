@@ -6,7 +6,8 @@ import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
 import com.facebook.react.bridge.Promise
 
-class UserDataModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
+class UserDataModule(reactContext: ReactApplicationContext) :
+    ReactContextBaseJavaModule(reactContext) {
 
     override fun getName(): String {
         return "UserDataModule"
@@ -29,7 +30,8 @@ class UserDataModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     @ReactMethod
     fun setAuthToken(token: String, promise: Promise) {
         try {
-            val sharedPref = reactApplicationContext.getSharedPreferences("UserData", Context.MODE_PRIVATE)
+            val sharedPref =
+                reactApplicationContext.getSharedPreferences("UserData", Context.MODE_PRIVATE)
             with(sharedPref.edit()) {
                 putString("authToken", token)
                 apply()
@@ -43,7 +45,8 @@ class UserDataModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     @ReactMethod
     fun clearUserData(promise: Promise) {
         try {
-            val sharedPref = reactApplicationContext.getSharedPreferences("UserData", Context.MODE_PRIVATE)
+            val sharedPref =
+                reactApplicationContext.getSharedPreferences("UserData", Context.MODE_PRIVATE)
             with(sharedPref.edit()) {
                 clear()
                 apply()

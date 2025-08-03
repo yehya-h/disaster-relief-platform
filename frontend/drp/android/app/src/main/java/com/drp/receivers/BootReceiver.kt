@@ -11,7 +11,7 @@ class BootReceiver : BroadcastReceiver() {
             // Check if user has enabled auto-start in your app settings
             val sharedPref = context.getSharedPreferences("AppSettings", Context.MODE_PRIVATE)
             val autoStart = sharedPref.getBoolean("autoStartLocationService", false)
-            
+
             if (autoStart) {
                 val serviceIntent = Intent(context, LocationForegroundService::class.java)
                 context.startForegroundService(serviceIntent)

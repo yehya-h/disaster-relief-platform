@@ -7,7 +7,8 @@ import com.facebook.react.bridge.ReactMethod
 import com.facebook.react.bridge.Promise
 import com.drp.services.LocationForegroundService
 
-class BackgroundLocationModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
+class BackgroundLocationModule(reactContext: ReactApplicationContext) :
+    ReactContextBaseJavaModule(reactContext) {
 
     override fun getName(): String {
         return "BackgroundLocationModule"

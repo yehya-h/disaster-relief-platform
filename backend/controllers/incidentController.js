@@ -7,32 +7,75 @@ const axios = require("axios");
 const mongoose = require("mongoose");
 const { triggerNotification } = require("../services/notificationService");
 
-const addIncident = async (req, res) => {
-  let session;
+const analyzeIncidentController = async (req, res) => {
   try {
     const incidentAnalysis = req.incidentAnalysis;
-    console.log(incidentAnalysis);
-
+    
     if (!incidentAnalysis.is_incident) {
       return res.status(422).json({
         message: "This report does not appear to be a real incident.",
+        analysis: incidentAnalysis
       });
     }
-    const formData = JSON.parse(req.body.incident);
-    console.log(formData);
-    let imageUrl = null;
-    imageUrl = await uploadImageToImgbb(req.file);
 
-    const typeId = await Type.findOne({ name: incidentAnalysis.type }).select(
-      "_id"
-    );
+    // Upload image temporarily and store URLs for later use
+    let imageUrl = null;
+    if (req.file) {
+      imageUrl = await uploadImageToImgbb(req.file);
+    }
+
+    // Return analysis to frontend for approval
+    return res.status(200).json({
+      message: "Incident analysis completed. Please review and approve.",
+      analysis: {
+        is_incident: incidentAnalysis.is_incident,
+        probability: incidentAnalysis.probability,
+        reasoning: incidentAnalysis.reasoning,
+        reformulated_description: incidentAnalysis.reformulated_description,
+        severity: incidentAnalysis.severity,
+        type: incidentAnalysis.type,
+        imageUrl: imageUrl || null,
+      }
+    });
+  } catch (error) {
+    console.error("Analysis error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const addIncident = async (req, res) => {
+  let session;
+  try {
+    const { 
+      formData, 
+      analysis, 
+      approved 
+    } = req.body;
+
+    // Check if user approved the analysis
+    if (!approved) {
+      return res.status(400).json({
+        message: "Incident submission was not approved."
+      });
+    }
+
+    // Validate analysis data
+    if (!analysis || !analysis.is_incident) {
+      return res.status(422).json({
+        message: "Invalid or missing analysis data."
+      });
+    }
+
+    const typeId = await Type.findOne({ name: analysis.type }).select("_id");
     if (!typeId) {
       return res.status(400).json({ message: "Invalid incident type." });
     }
 
     const TIME_RANGE = 30;
-    const session = await mongoose.startSession();
+    session = await mongoose.startSession();
     session.startTransaction();
+
+    // Check for nearby incidents
     const nearByIncident = await Form.findOne({
       location: {
         $near: {
@@ -48,17 +91,20 @@ const addIncident = async (req, res) => {
         $gte: new Date(Date.now() - TIME_RANGE * 60 * 1000),
       },
     }).session(session);
+
     if (nearByIncident != null) {
+      // Add to existing incident
       const newIncidentForm = new Form({
-        imageUrl: imageUrl,
-        description: incidentAnalysis.reformulated_description,
+        imageUrl: analysis.imageUrl,
+        description: analysis.reformulated_description,
         location: formData.location,
         timestamp: formData.timestamp,
         incidentId: nearByIncident._id,
         reporterId: req.user.id,
         typeId: typeId,
-        severity: incidentAnalysis.severity.toLowerCase(),
+        severity: analysis.severity.toLowerCase(),
       });
+      
       const savedIncident = await newIncidentForm.save({ session });
       await session.commitTransaction();
       session.endSession();
@@ -68,44 +114,151 @@ const addIncident = async (req, res) => {
         data: savedIncident,
       });
     } else {
+      // Create new incident
       const newIncident = await new Incident({
         isFake: false,
       }).save({ session });
+
       const newIncidentForm = new Form({
-        imageUrl: imageUrl,
-        description: incidentAnalysis.reformulated_description,
+        imageUrl: analysis.imageUrl,
+        description: analysis.reformulated_description,
         location: formData.location,
         timestamp: formData.timestamp,
         incidentId: newIncident._id,
-        reporterId: req.user.id, // not last version
+        reporterId: req.user.id,
         typeId: typeId,
-        severity: incidentAnalysis.severity.toLowerCase(),
+        severity: analysis.severity.toLowerCase(),
       });
+
       const savedIncident = await newIncidentForm.save({ session });
-      // console.log(savedIncident);
       await session.commitTransaction();
       session.endSession();
 
+      // Trigger notification asynchronously
       triggerNotification(
         formData.location,
-        incidentAnalysis.type,
-        incidentAnalysis.reformulated_description,
+        analysis.type,
+        analysis.reformulated_description,
         newIncident._id
       ).catch((err) => {
         console.error("Notification failed:", err);
       });
 
-      return res.status(201).json(savedIncident);
+      return res.status(201).json({
+        message: "Incident created successfully.",
+        data: savedIncident
+      });
     }
   } catch (error) {
-    console.log(error);
-    if (session) {
+    console.error("Add incident error:", error);
+    if (session && session.inTransaction()) {
       await session.abortTransaction();
       session.endSession();
     }
     res.status(500).json({ message: error.message });
   }
 };
+
+
+// const addIncident = async (req, res) => {
+//   let session;
+//   try {
+//     const incidentAnalysis = req.incidentAnalysis;
+//     console.log(incidentAnalysis);
+
+//     if (!incidentAnalysis.is_incident) {
+//       return res.status(422).json({
+//         message: "This report does not appear to be a real incident.",
+//       });
+//     }
+//     const formData = JSON.parse(req.body.incident);
+//     console.log(formData);
+//     let imageUrl = null;
+//     imageUrl = await uploadImageToImgbb(req.file);
+
+//     const typeId = await Type.findOne({ name: incidentAnalysis.type }).select(
+//       "_id"
+//     );
+//     if (!typeId) {
+//       return res.status(400).json({ message: "Invalid incident type." });
+//     }
+
+//     const TIME_RANGE = 30;
+//     const session = await mongoose.startSession();
+//     session.startTransaction();
+//     const nearByIncident = await Form.findOne({
+//       location: {
+//         $near: {
+//           $geometry: {
+//             type: "Point",
+//             coordinates: formData.location.coordinates,
+//           },
+//           $maxDistance: 500,
+//         },
+//       },
+//       typeId: typeId,
+//       timestamp: {
+//         $gte: new Date(Date.now() - TIME_RANGE * 60 * 1000),
+//       },
+//     }).session(session);
+//     if (nearByIncident != null) {
+//       const newIncidentForm = new Form({
+//         imageUrl: imageUrl,
+//         description: incidentAnalysis.reformulated_description,
+//         location: formData.location,
+//         timestamp: formData.timestamp,
+//         incidentId: nearByIncident._id,
+//         reporterId: req.user.id,
+//         typeId: typeId,
+//         severity: incidentAnalysis.severity.toLowerCase(),
+//       });
+//       const savedIncident = await newIncidentForm.save({ session });
+//       await session.commitTransaction();
+//       session.endSession();
+
+//       return res.status(200).json({
+//         message: "Incident already exists. Your report has been added.",
+//         data: savedIncident,
+//       });
+//     } else {
+//       const newIncident = await new Incident({
+//         isFake: false,
+//       }).save({ session });
+//       const newIncidentForm = new Form({
+//         imageUrl: imageUrl,
+//         description: incidentAnalysis.reformulated_description,
+//         location: formData.location,
+//         timestamp: formData.timestamp,
+//         incidentId: newIncident._id,
+//         reporterId: req.user.id, // not last version
+//         typeId: typeId,
+//         severity: incidentAnalysis.severity.toLowerCase(),
+//       });
+//       const savedIncident = await newIncidentForm.save({ session });
+//       // console.log(savedIncident);
+//       await session.commitTransaction();
+//       session.endSession();
+
+//       triggerNotification(
+//         formData.location,
+//         incidentAnalysis.type,
+//         incidentAnalysis.reformulated_description,
+//         newIncident._id
+//       ).catch((err) => {
+//         console.error("Notification failed:", err);
+//       });
+
+//       return res.status(201).json(savedIncident);
+//     }
+//   } catch (error) {
+//     console.log(error);
+//     if (session) {
+//       await session.abortTransaction();
+//       session.endSession();
+//     }
+//     res.status(500).json({ message: error.message });
+//   }
+// };
 
 const getLatestIncidentForms = async (req, res) => {
   try {
@@ -200,6 +353,7 @@ const getIncidentById = async (req, res) => {
 // };
 
 module.exports = {
+  analyzeIncidentController,
   addIncident,
   getLatestIncidentForms,
   getIncidentById,
