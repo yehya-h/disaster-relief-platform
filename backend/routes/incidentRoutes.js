@@ -6,6 +6,7 @@ const {
   getLatestIncidentForms,
   getIncidentById,
   getNearbyIncidents,
+  getMoreIncidents,
 } = require("../controllers/incidentController");
 const upload = require("../middlewares/upload");
 const analyzeIncident = require("../middlewares/analyzer.middleware");
@@ -37,6 +38,7 @@ router.post(
 router.get("/latest", getLatestIncidentForms);
 router.get("/nearby", getNearbyIncidents);
 router.get("/:id", getIncidentById);
+router.get("/load-more", getMoreIncidents);
 // router.post('/upload-image', upload.single('image'), uploadImageToImgbb);
 
 module.exports = router;

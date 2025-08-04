@@ -15,6 +15,7 @@ const incidentSchema = mongoose.Schema(
   },
   {
     toJSON: { virtuals: true }, // Ensure virtuals are included in responses
+    timestamps: true,
   }
 );
 

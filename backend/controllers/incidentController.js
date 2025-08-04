@@ -267,7 +267,7 @@ const getLatestIncidentForms = async (req, res) => {
     const validIncidents = await Incident.find({
       isFake: false,
       // lastUpdated: { $gte: twentyFourHoursAgo }
-    }).select('_id');
+    }).select("_id");
     console.log(validIncidents);
     // Then get latest forms for these incidents
     const latestForms = await Form.find({
@@ -278,7 +278,7 @@ const getLatestIncidentForms = async (req, res) => {
     console.log(latestForms);
     res.status(200).json(latestForms);
   } catch (error) {
-    console.error('Error fetching latest incident forms:', error);
+    console.error("Error fetching latest incident forms:", error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -308,7 +308,7 @@ const getNearbyIncidents = async (req, res) => {
     }).sort({ timestamp: -1 });
     res.status(200).json(nearbyIncidentsForms);
   } catch (error) {
-    console.error('Error fetching nearby incidents:', error);
+    console.error("Error fetching nearby incidents:", error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -323,6 +323,46 @@ const getIncidentById = async (req, res) => {
     res.status(200).json(incident);
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+const getMoreIncidents = async (req, res) => {
+  try {
+    const chunk = parseInt(req.query.chunk) || 1;
+    const limit = 10;
+    const skip = (chunk - 1) * limit;
+
+    const incidents = await Incident.find({ isFake: false })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    const totalIncidents = await Incident.countDocuments({ isFake: false });
+    const incidentIds = incidents.map((i) => i._id);
+
+    const forms = incidentIds.length
+      ? await Form.find({ incidentId: { $in: incidentIds } }).lean()
+      : [];
+
+    const formsByIncident = {};
+    forms.forEach((form) => {
+      const id = form.incidentId.toString();
+      if (!formsByIncident[id]) {
+        formsByIncident[id] = [];
+      }
+      formsByIncident[id].push(form);
+    });
+
+    res.json({
+      chunk,
+      totalchunks: Math.ceil(totalIncidents / limit),
+      totalIncidents,
+      incidents,
+      formsByIncident,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error });
   }
 };
 
@@ -358,5 +398,6 @@ module.exports = {
   getLatestIncidentForms,
   getIncidentById,
   getNearbyIncidents,
+  getMoreIncidents,
   // tryUploadImageToImgbb,
 };
