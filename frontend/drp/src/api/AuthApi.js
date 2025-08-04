@@ -1,5 +1,6 @@
 import api from './Interceptor';
 import axios from 'axios';
+import { NODE_API_IP, NODE_API_PORT } from '@env';
 
 export const registerUser = async userData => {
   console.log('fct: registerUser --- userData: ', userData);
@@ -24,6 +25,7 @@ export const guestToken = async userData => {
   console.log('fct: guestToken --- userData: ', userData);
   const response = await axios.post(
     `https://disaster-relief-platform-6q95.onrender.com/guestToken`,
+    // `http://${NODE_API_IP}:${NODE_API_PORT}/guestToken`,
     userData,
   );
   // const response = await axios.post(
