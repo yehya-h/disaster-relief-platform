@@ -22,11 +22,7 @@ router.post(
 );
 
 // Route 2: Add incident (after user approval)
-router.post(
-  "/add",
-  authRole(0),
-  addIncident
-);
+router.post("/add", authRole(0), addIncident);
 
 // router.post(
 //   "/",
@@ -37,8 +33,9 @@ router.post(
 // );
 router.get("/latest", getLatestIncidentForms);
 router.get("/nearby", getNearbyIncidents);
-router.get("/:id", getIncidentById);
 router.get("/load-more", getMoreIncidents);
+router.get("/:id", getIncidentById);
+
 // router.post('/upload-image', upload.single('image'), uploadImageToImgbb);
 
 module.exports = router;
