@@ -69,43 +69,46 @@ def format_size(bytes_len):
     kb = bytes_len / 1024
     mb = kb / 1024
     return f"{kb:.2f} KB", f"{mb:.2f} MB"
-
-def compress_image(image_bytes, max_size=(1024, 1024), quality=90):
-    # Original size
-    original_size_bytes = len(image_bytes)
-    original_kb, original_mb = format_size(original_size_bytes)
-    print(f"Original size: {original_kb} ({original_mb})")
-
-    image = Image.open(io.BytesIO(image_bytes))
-
-    # Convert to RGB (to avoid issues with PNG or transparency)
-    if image.mode != "RGB":
-        image = image.convert("RGB")
-
-    # Resize the image
-    image.thumbnail(max_size)  # Preserves aspect ratio
-
-    # Save it into bytes again
-    output_buffer = io.BytesIO()
-    image.save(output_buffer, format='JPEG', quality=quality, optimize=True)
-
-    compressed_bytes = output_buffer.getvalue()
-    compressed_size_bytes = len(compressed_bytes)
-    compressed_kb, compressed_mb = format_size(compressed_size_bytes)
-    print(f"Compressed size: {compressed_kb} ({compressed_mb})")
-
-    return compressed_bytes
+#
+# def compress_image(image_bytes, max_size=(1024, 1024), quality=90):
+#     # Original size
+#     original_size_bytes = len(image_bytes)
+#     original_kb, original_mb = format_size(original_size_bytes)
+#     print(f"Original size: {original_kb} ({original_mb})")
+#
+#     image = Image.open(io.BytesIO(image_bytes))
+#
+#     # Convert to RGB (to avoid issues with PNG or transparency)
+#     if image.mode != "RGB":
+#         image = image.convert("RGB")
+#
+#     # Resize the image
+#     image.thumbnail(max_size)  # Preserves aspect ratio
+#
+#     # Save it into bytes again
+#     output_buffer = io.BytesIO()
+#     image.save(output_buffer, format='JPEG', quality=quality, optimize=True)
+#
+#     compressed_bytes = output_buffer.getvalue()
+#     compressed_size_bytes = len(compressed_bytes)
+#     compressed_kb, compressed_mb = format_size(compressed_size_bytes)
+#     print(f"Compressed size: {compressed_kb} ({compressed_mb})")
+#
+#     return compressed_bytes
 
 @app.route("/analyze", methods=["POST"])
 def analyze():
     global types
     file = request.files['image']
     img_bytes = file.read()
-    compressed_img = compress_image(img_bytes)
+    # compressed_img = compress_image(img_bytes)
     input_desc = request.form['description']
     input_type = request.form['type']
     input_severity = request.form['severity']
     desc_empty = False
+
+    print(f"============>NEW REQUEST <===============")
+    print(f"input_desc: {input_desc} ||image size: {format_size(file.tell())} ||({input_type}) ||{input_severity}")
 
     # types = ['fire', 'flood', 'earthquake', 'tornado', 'volcano', 'car crash']
     if not types:
@@ -254,7 +257,7 @@ def analyze():
     # Call the model
     response = model.generate_content(
         [
-            {"mime_type": "image/jpeg", "data": compressed_img},
+            {"mime_type": "image/jpeg", "data": img_bytes},
             demo_instructions,
             f"Extra details provided by user: "
             f"type of incident = '{input_type}', "
@@ -312,6 +315,7 @@ def analyze():
         """
     else:
         desc_instructions = f"""
+        You are an expert in writing incident summaries for media-news platforms.
         The user provided the following description of the incident: "{input_desc}"
 
         Your task:
@@ -321,6 +325,7 @@ def analyze():
         - Whether the description accurately reflects the type of disaster, its severity, and visible impact.
         - Whether the description captures the correct context, even if wording is different.
         - Do NOT penalize for grammar, paraphrasing, or missing minor details.
+        4. formulate a short, clear, and natural-sounding paragraph describing the detected disaster incident.
 
         IMPORTANT:
         - A score of **1.0** means the user's description is truthful, contextually appropriate, and conveys the correct disaster type and severity.
