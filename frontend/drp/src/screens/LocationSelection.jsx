@@ -109,7 +109,7 @@ const LocationSelection = ({ navigation, route }) => {
       dispatch(clearSignupData());
 
     } catch (error) {
-      console.error('Error during signup:', error);
+      console.log('Error during signup:', error);
       Alert.alert('Error', error.response?.data?.message || 'Failed to complete signup. Please try again.');
     } finally {
       setIsSubmitting(false);

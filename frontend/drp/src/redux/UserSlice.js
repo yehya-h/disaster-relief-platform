@@ -10,6 +10,7 @@ export const userSlice = createSlice({
     fname: '',
     lname: '',
     email: '',
+    locations: []
   },
   reducers: {
     addUser: (state, action) => {
@@ -22,6 +23,7 @@ export const userSlice = createSlice({
       state.fname = action.payload.fname;
       state.lname = action.payload.lname;
       state.email = action.payload.email;
+      state.locations = action.payload.locations || [];
     },
     removeUser: (state) => {
       state.userId = '';

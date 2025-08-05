@@ -29,7 +29,7 @@ export default function SignIn({ navigation, route, ...others }) {
   const prefillPassword = route?.params?.prefillPassword || '';
 
   let userSchema = yup.object({
-    email: yup.string().required("Email is required").email("Invalid email"),
+    email: yup.string().required("Email is required").email("Invalid email").matches(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "Invalid email"),
     password: yup.string().min(6, "Password can't be less than 6").required("Password is required"),
   });
 
@@ -146,7 +146,8 @@ export default function SignIn({ navigation, route, ...others }) {
         dispatch(updateUserDetails({
           fname: userDetails.fname,
           lname: userDetails.lname,
-          email: userDetails.email
+          email: userDetails.email,
+          locations: userDetails.locations || [],
         }));
 
         dispatch(addUser({ userId: decoded.id, role: decoded.role }));
@@ -159,6 +160,15 @@ export default function SignIn({ navigation, route, ...others }) {
     } catch (e) {
       console.log("Login error:", e);
       const errorMessage = e.response?.data?.message || e.message;
+
+      if (errorMessage.includes('Email address not found')) {
+        Alert.alert(
+          'Account Not Found',
+          'No account exists with this email. Please sign up first.'
+        );
+        setIsSubmitting(false);
+        return;
+      }
 
       if (errorMessage.includes('Incorrect password')) {
         Alert.alert('Login failed', 'Incorrect password. Please check your password and try again.');
