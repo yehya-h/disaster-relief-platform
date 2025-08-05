@@ -1,6 +1,7 @@
 const Notification = require('../models/notificationModel');
 const Form = require('../models/formModel');
 
+
 const getNotificationsById = async (req, res) => {
     try {
         const userId = req.user.id;
@@ -14,7 +15,9 @@ const getNotificationsById = async (req, res) => {
         incidentId: { $in: incidentIds },
         active: true
         }).select('description')
-        console.log('Fetched notifications:', notifications);
+        .select('severity ')
+        .select('timestamp')
+        .select('location')
         console.log('Fetched forms:', forms);
         res.status(200).json(forms); 
     } catch (error) {
@@ -22,6 +25,8 @@ const getNotificationsById = async (req, res) => {
         res.status(500).json({ message: 'Internal server error' });
     }
 };
+
+
 
 module.exports = {
     getNotificationsById
