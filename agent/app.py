@@ -315,7 +315,6 @@ def analyze():
         """
     else:
         desc_instructions = f"""
-        You are an expert in writing incident summaries for media-news platforms.
         The user provided the following description of the incident: "{input_desc}"
 
         Your task:
@@ -325,7 +324,6 @@ def analyze():
         - Whether the description accurately reflects the type of disaster, its severity, and visible impact.
         - Whether the description captures the correct context, even if wording is different.
         - Do NOT penalize for grammar, paraphrasing, or missing minor details.
-        4. formulate a short, clear, and natural-sounding paragraph describing the detected disaster incident.
 
         IMPORTANT:
         - A score of **1.0** means the user's description is truthful, contextually appropriate, and conveys the correct disaster type and severity.
