@@ -307,11 +307,8 @@ const getNearbyIncidents = async (req, res) => {
       incidentId: { $in: validIncidents.map((i) => i._id) },
     })
     .populate({
-        path: "incidentId",
-        populate: {
           path: "typeId",
           model: "Type", 
-        },
       })
       .sort({ timestamp: -1 });
 
