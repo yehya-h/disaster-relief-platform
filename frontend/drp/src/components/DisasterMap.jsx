@@ -15,11 +15,12 @@ import { startLocationTracking, stopLocationTracking } from '../services/locatio
 import IncidentMarker from '../mapComponents/incidentMarker';
 import LiveLocationMarker from '../mapComponents/liveLocationMarker';
 import ShelterMarker from '../mapComponents/shelterMarker';
+import UserLocMarker from '../mapComponents/userLocMarker';
 import RouteStartMarker from '../mapComponents/routeStartMarker';
 import RouteEndMarker from '../mapComponents/routeEndMarker';
 
 const DisasterMap = React.memo(
-  ({ shelters, incidents, latitude, longitude, setLocation }) => {
+  ({ shelters, incidents, userLocations, latitude, longitude, setLocation }) => {
     const [zoomLevel, setZoomLevel] = useState(15);
     const [markerSize, setMarkerSize] = useState(24); // Default marker size 
 
@@ -522,6 +523,29 @@ const DisasterMap = React.memo(
             );
           })}
 
+          {/* User Locations Markers */}
+          {userLocations.map((location, index) => {
+            const coords = {
+              latitude: location.location.coordinates[1],
+              longitude: location.location.coordinates[0],
+            };
+
+            return (
+              <React.Fragment key={`user-location-${index}`}>
+                <Marker coordinate={coords} anchor={{ x: 0.5, y: 0.5 }}>
+                  <UserLocMarker size={markerSize} />
+                  <Callout>
+                    <View style={styles.calloutContainer}>
+                      <Text style={styles.calloutTitle}>
+                        {location.location.name || 'User Location'}
+                      </Text>
+                    </View>
+                  </Callout>
+                </Marker>
+              </React.Fragment>
+            );
+          })}
+
           {/* Live Location Marker - Now uses currentLocation instead of static lat/lng */}
           {currentLocation && currentLocation.lat && currentLocation.lng && (
             <Marker
@@ -685,7 +709,9 @@ const DisasterMap = React.memo(
       prevProps.latitude === nextProps.latitude &&
       prevProps.longitude === nextProps.longitude &&
       prevProps.shelters?.length === nextProps.shelters?.length &&
-      prevProps.incidents?.length === nextProps.incidents?.length
+      prevProps.incidents?.length === nextProps.incidents?.length &&
+      prevProps.userLocations?.length === nextProps.userLocations?.length &&
+      prevProps.setLocation === nextProps.setLocation
     );
   },
 );

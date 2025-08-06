@@ -18,13 +18,14 @@ import {
   TouchableOpacity,
   PermissionsAndroid,
   Alert,
+  ScrollView
 } from 'react-native';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { getCurrentLocation } from '../services/location/locationService';
 import AnalysisModal from '../components/AnalysisModal'; // Import the independent component
-import { ScrollView } from 'react-native-gesture-handler';
+// import { ScrollView } from 'react-native-gesture-handler';
 import ImageResizer from 'react-native-image-resizer';
 
 const severityLevels = ['Low', 'Medium', 'High'];

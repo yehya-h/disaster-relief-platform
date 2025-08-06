@@ -18,7 +18,7 @@ export default function MapScreen() {
   const [isMapReady, setIsMapReady] = useState(false);
   
   const role = useSelector(state => state.user.role);
-  if (role && role !== 1) {
+  if (role !== 1) {
     const drawerStatus = useDrawerStatus();
 
     useEffect(() => {
@@ -30,6 +30,7 @@ export default function MapScreen() {
   }
   const shelters = useSelector(state => state.shelter.shelters);
   const incidents = useSelector(state => state.incident.incidents);
+  const userLocations = useSelector(state => state.user.locations);
   const dispatch = useDispatch();
 
   // Fetch location on component mount
@@ -132,6 +133,7 @@ export default function MapScreen() {
           key={mapKey} // 🔁 forces re-render only when mapKey changes
           shelters={shelters || []}
           incidents={incidents || []}
+          userLocations={userLocations || []}
           latitude={location.latitude}
           longitude={location.longitude}
           setLocation={setLocation}

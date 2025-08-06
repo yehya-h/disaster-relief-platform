@@ -39,6 +39,7 @@ export default function AppNavigator() {
                   fname: userDetails.fname,
                   lname: userDetails.lname,
                   email: userDetails.email,
+                  locations: userDetails.locations || [],
                 }),
               );
               setIsLoggedIn(true);

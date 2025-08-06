@@ -33,6 +33,7 @@ export const userSlice = createSlice({
       state.fname = '';
       state.lname = '';
       state.email = '';
+      state.locations = [];
     },
   },
 });
