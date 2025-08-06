@@ -305,7 +305,16 @@ const getNearbyIncidents = async (req, res) => {
       active: true,
       timestamp: { $gte: twentyFourHoursAgo },
       incidentId: { $in: validIncidents.map((i) => i._id) },
-    }).sort({ timestamp: -1 });
+    })
+    .populate({
+        path: "incidentId",
+        populate: {
+          path: "typeId",
+          model: "Type", 
+        },
+      })
+      .sort({ timestamp: -1 });
+
     res.status(200).json(nearbyIncidentsForms);
   } catch (error) {
     console.error("Error fetching nearby incidents:", error);
@@ -365,6 +374,7 @@ const getMoreIncidents = async (req, res) => {
     res.status(500).json({ message: "Server error", error });
   }
 };
+
 
 // const tryUploadImageToImgbb = async (req, res) => {
 //     try {

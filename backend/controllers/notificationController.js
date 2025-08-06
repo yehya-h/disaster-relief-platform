@@ -14,7 +14,8 @@ const getNotificationsById = async (req, res) => {
         const forms = await Form.find({
         incidentId: { $in: incidentIds },
         active: true
-        }).select('description')
+        }).select('_id')
+        .select('description')
         .select('severity ')
         .select('timestamp')
         .select('location')
