@@ -18,6 +18,7 @@ import ShelterMarker from '../mapComponents/shelterMarker';
 import UserLocMarker from '../mapComponents/userLocMarker';
 import RouteStartMarker from '../mapComponents/routeStartMarker';
 import RouteEndMarker from '../mapComponents/routeEndMarker';
+import { showSuccessToast } from '../utils/toast';
 
 const DisasterMap = React.memo(
   ({ shelters, incidents, userLocations, latitude, longitude, setLocation }) => {
@@ -72,7 +73,7 @@ const DisasterMap = React.memo(
     const animateToLocation = (location) => {
       if (!mapRef.current || !location) return;
       console.log("from animate camera: ", zoomRef.current);
-      
+
       mapRef.current.animateCamera({
         center: {
           latitude: location.lat,
@@ -138,6 +139,7 @@ const DisasterMap = React.memo(
             setRouteEndPoint(null);
             setShowShelterNavigationPrompt(false);
             safeRouteRef.current = null;
+            showSuccessToast("You've reached the shelter!");
           }
         }
       }, { enableHighAccuracy: true, timeout: 5000 });
@@ -289,6 +291,28 @@ const DisasterMap = React.memo(
     const getSafeRouteForLocation = async (location) => {
       if (!shelters || shelters.length === 0) return;
 
+      filteredShelters = shelters
+        .filter(shelter => {
+          const shelterLat = shelter.location.coordinates[1];
+          const shelterLng = shelter.location.coordinates[0];
+
+          // Check if this shelter is within 500m of any incident
+          const isNearAnyIncident = incidents.some(incident => {
+            const incidentLat = incident.location.coordinates[1];
+            const incidentLng = incident.location.coordinates[0];
+            return isWithinDistance(
+              shelterLat,
+              shelterLng,
+              incidentLat,
+              incidentLng,
+              500, // 500 meters
+            );
+          });
+
+          // Keep shelter only if it's NOT near any incident
+          return !isNearAnyIncident;
+        })
+
       setRouting(true);
       try {
         // Convert incidents to hit areas format
@@ -298,7 +322,7 @@ const DisasterMap = React.memo(
           radius: 500 // 500m radius for each incident
         }));
 
-        const safeRouteData = await getSafeRouteToShelter(location, shelters, hitAreas);
+        const safeRouteData = await getSafeRouteToShelter(location, filteredShelters, hitAreas);
 
         if (safeRouteData && safeRouteData.route) {
           console.log('safe route: ', safeRouteData)

@@ -13,6 +13,7 @@ import { ORS_API_KEY } from '@env';
 async function getRouteORS(start, end, avoidPolygons = [], shelterBoolean) {
   let body = null;
   // console.log("avoidPolygons", avoidPolygons);
+  console.log("start:", start, " end:", end);
   if (shelterBoolean) {
     const multiCoords = avoidPolygons
       .map(polygon => {
@@ -21,7 +22,7 @@ async function getRouteORS(start, end, avoidPolygons = [], shelterBoolean) {
         }
         throw new Error("Invalid polygon object");
       });
-    
+
     body = {
       coordinates: [
         [start.lng, start.lat],

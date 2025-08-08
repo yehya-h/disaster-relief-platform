@@ -3,8 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Alert, Acti
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { getCountryNameFromCoords } from '../services/geocoding/geocodingService';
 import { checkAndRequestLocationPermission } from "../services/permissions/locationPermissionService";
-// import { LocationService } from '../services/LocationService';
-import { getCurrentLocation } from '../services/location/locationService';
+import { LocationService } from '../services/LocationService';
+// import { getCurrentLocation } from '../services/location/locationService';
 
 const LocationPicker = ({ visible, onClose, onLocationSelected, editingLocation }) => {
   const [selectedLocation, setSelectedLocation] = useState(null);
@@ -27,7 +27,9 @@ const LocationPicker = ({ visible, onClose, onLocationSelected, editingLocation 
         }
 
         // Get current location
-        const location = await getCurrentLocation();
+        // const location = await getCurrentLocation();
+        const locationService = LocationService.getInstance();
+        const location = await locationService.getCurrentLocation();
 
         setLiveLoc({
           latitude: location?.latitude ?? 34, // Fallback to 34 if null
