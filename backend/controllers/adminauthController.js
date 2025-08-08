@@ -23,12 +23,19 @@ export const adminLogin = async (req, res) => {
         { expiresIn: JWT_EXPIRES_IN }
     );
 
-    res.json({ token });
+    // Send token along with user info
+    res.json({
+        token,
+        user: {
+            username,
+            role: 2
+        }
+    });
 };
 
 // Logout controller (optional, for stateless JWT just respond OK)
 export const adminLogout = (req, res) => {
-    res.json({ message: 'Logged out' });
+    res.json({ message: 'Logged out successfully' });
 };
 
 // Verify token controller
@@ -44,7 +51,15 @@ export const verifyAdminToken = (req, res) => {
         if (decoded.role !== 2) {
             return res.status(403).json({ message: 'Forbidden: Invalid role' });
         }
-        res.json({ valid: true, user: decoded });
+
+        // Send user info along with validation
+        res.json({
+            valid: true,
+            user: {
+                username: decoded.username,
+                role: decoded.role
+            }
+        });
     } catch (err) {
         res.status(401).json({ message: 'Invalid token' });
     }
