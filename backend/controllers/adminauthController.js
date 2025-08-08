@@ -1,7 +1,5 @@
-import jwt from 'jsonwebtoken';
-import dotenv from 'dotenv';
-
-dotenv.config();
+const jwt = require("jsonwebtoken");
+require('dotenv').config();
 
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
@@ -9,7 +7,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1h';
 
 // Login controller
-export const adminLogin = async (req, res) => {
+const adminLogin = async (req, res) => {
     const { username, password } = req.body;
 
     if (username !== ADMIN_USERNAME || password !== ADMIN_PASSWORD) {
@@ -34,12 +32,12 @@ export const adminLogin = async (req, res) => {
 };
 
 // Logout controller (optional, for stateless JWT just respond OK)
-export const adminLogout = (req, res) => {
+const adminLogout = (req, res) => {
     res.json({ message: 'Logged out successfully' });
 };
 
 // Verify token controller
-export const verifyAdminToken = (req, res) => {
+const verifyAdminToken = (req, res) => {
     const authHeader = req.headers.authorization;
     if (!authHeader) {
         return res.status(401).json({ message: 'No token provided' });
@@ -63,4 +61,10 @@ export const verifyAdminToken = (req, res) => {
     } catch (err) {
         res.status(401).json({ message: 'Invalid token' });
     }
+};
+
+module.exports = {
+    adminLogin,
+    adminLogout,
+    verifyAdminToken
 };
