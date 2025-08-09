@@ -22,7 +22,7 @@ app.use(express.json());
 app.use(cors());
 
 // Routes
-app.use("/api/admin/auth", adminAuthRoutes);
+app.use("/api/auth/admin", adminAuthRoutes);
 app.use("/api/auth", authToken, authRole(1), authRoutes);
 app.use("/api/incidents", authToken, incidentRoutes);
 app.use("/api/shelters", authToken, shelterRoutes);
