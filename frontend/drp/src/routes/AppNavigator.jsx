@@ -32,7 +32,6 @@ export default function AppNavigator() {
           const decoded = jwtDecode(token);
           console.log('existing token: ', 'role:', decoded, ' ', token);
           if (decoded.role == 0) {
-            setIsLoggedIn(true);
             try {
               const userDetails = await getUserById();
               dispatch(
@@ -40,10 +39,25 @@ export default function AppNavigator() {
                   fname: userDetails.fname,
                   lname: userDetails.lname,
                   email: userDetails.email,
+                  locations: userDetails.locations || [],
                 }),
               );
+              setIsLoggedIn(true);
             } catch (error) {
-              console.error('Error fetching user details:', error);
+              console.log('Error fetching user details:', error);
+              if (error.response?.status == 404) {
+                console.log("generating token for missing user");
+                const token = generateGuestToken(loc);
+                if (!token) {
+                  Alert.alert(
+                    'Token Failure',
+                    'Could not generate a token now, try again later.',
+                    [
+                      { text: 'OK', onPress: () => navigate('Home') }
+                    ]
+                  );
+                }
+              }
             }
           }
           dispatch(
@@ -62,40 +76,50 @@ export default function AppNavigator() {
             }),
           );
         } else {
-          const response = await guestToken({
-            deviceId: await DeviceInfo.getUniqueId(),
-            liveLocation: {
-              type: 'Point',
-              coordinates: [loc.longitude, loc.latitude],
-            },
-          });
-          console.log('new token: ', response.token);
-          if (response.token) {
-            const decoded = jwtDecode(response.token);
-            // await AsyncStorage.setItem("token", response.token);
-            await UserDataHelper.setAuthToken(response.token);
-            console.log(
-              'non existing token: ',
-              'role:',
-              decoded,
-              ' ',
-              response.token,
-            );
-            dispatch(
-              addUser({
-                userId: decoded.id,
-                role: decoded.role,
-                fcmToken: '',
-                deviceId: await DeviceInfo.getUniqueId(),
-              }),
-            );
-            dispatch(
-              addLiveLoc({
-                latitude: loc.latitude,
-                longitude: loc.longitude,
-              }),
+          const token = generateGuestToken(loc);
+          if (!token) {
+            Alert.alert(
+              'Token Failure',
+              'Could not generate a token now, try again later.',
+              [
+                { text: 'OK', onPress: () => navigate('Home') }
+              ]
             );
           }
+          // const response = await guestToken({
+          //   deviceId: await DeviceInfo.getUniqueId(),
+          //   liveLocation: {
+          //     type: 'Point',
+          //     coordinates: [loc.longitude, loc.latitude],
+          //   },
+          // });
+          // console.log('new token: ', response.token);
+          // if (response.token) {
+          //   const decoded = jwtDecode(response.token);
+          //   // await AsyncStorage.setItem("token", response.token);
+          //   await UserDataHelper.setAuthToken(response.token);
+          //   console.log(
+          //     'non existing token: ',
+          //     'role:',
+          //     decoded,
+          //     ' ',
+          //     response.token,
+          //   );
+          //   dispatch(
+          //     addUser({
+          //       userId: decoded.id,
+          //       role: decoded.role,
+          //       fcmToken: '',
+          //       deviceId: await DeviceInfo.getUniqueId(),
+          //     }),
+          //   );
+          //   dispatch(
+          //     addLiveLoc({
+          //       latitude: loc.latitude,
+          //       longitude: loc.longitude,
+          //     }),
+          //   );
+          // }
           await getFcmToken();
         }
       } catch (e) {
@@ -106,6 +130,57 @@ export default function AppNavigator() {
     };
     checkToken();
   }, []);
+
+  const generateGuestToken = async (loc) => {
+    try {
+      if (!loc || !loc.latitude || !loc.longitude) {
+        console.error('Invalid location provided');
+        return null;
+      }
+
+      const response = await guestToken({
+        deviceId: await DeviceInfo.getUniqueId(),
+        liveLocation: {
+          type: 'Point',
+          coordinates: [loc.longitude, loc.latitude],
+        },
+      });
+
+      console.log('new token: ', response.token);
+
+      if (!response?.token) {
+        console.error('No token received in response');
+        return null;
+      }
+
+      const decoded = jwtDecode(response.token);
+      await UserDataHelper.setAuthToken(response.token);
+
+      console.log('non existing token: ', 'role:', decoded, ' ', response.token);
+
+      dispatch(
+        addUser({
+          userId: decoded.id,
+          role: decoded.role,
+          fcmToken: '',
+          deviceId: await DeviceInfo.getUniqueId(),
+        })
+      );
+
+      dispatch(
+        addLiveLoc({
+          latitude: loc.latitude,
+          longitude: loc.longitude,
+        })
+      );
+
+      return response.token;
+
+    } catch (error) {
+      console.error('Error in generateAndProcessGuestToken:', error);
+      return null;
+    }
+  };
 
   useEffect(() => {
     const initLocationService = async () => {

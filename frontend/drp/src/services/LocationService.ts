@@ -1,5 +1,5 @@
 import { NativeModules, PermissionsAndroid, Platform } from 'react-native';
-import GetLocation from 'react-native-get-location';
+import Geolocation from '@react-native-community/geolocation';
 
 const { BackgroundLocationModule } = NativeModules;
 
@@ -13,6 +13,7 @@ export interface LocationData {
 export class LocationService {
   private static instance: LocationService;
   private isServiceRunning = false;
+  private watchId: number | null = null;
 
   public static getInstance(): LocationService {
     if (!LocationService.instance) {
@@ -79,22 +80,27 @@ export class LocationService {
 
   // Get current location
   async getCurrentLocation(): Promise<LocationData | null> {
-    try {
-      const location = await GetLocation.getCurrentPosition({
-        enableHighAccuracy: true,
-        timeout: 15000,
-      });
-      
-      return {
-        latitude: location.latitude,
-        longitude: location.longitude,
-        accuracy: location.accuracy,
-        timestamp: Date.now(),
-      };
-    } catch (error) {
-      console.error('Error getting location:', error);
-      return null;
-    }
+    return new Promise((resolve) => {
+      Geolocation.getCurrentPosition(
+        (position) => {
+          resolve({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+            timestamp: position.timestamp,
+          });
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+          resolve(null);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 10000,
+        }
+      );
+    });
   }
 
   // Start background location service
@@ -134,24 +140,59 @@ export class LocationService {
     return this.isServiceRunning;
   }
 
-  // Get location updates (for foreground use)
+  // Get location updates (for foreground use) - improved version using watchPosition
   async getLocationUpdates(callback: (location: LocationData) => void): Promise<void> {
-    const interval = setInterval(async () => {
-      const location = await this.getCurrentLocation();
-      if (location) {
-        callback(location);
-      }
-    }, 15 * 1000); // 15 seconds interval
+    // Stop any existing watch
+    this.stopLocationUpdates();
 
-    // Store interval ID for cleanup
-    (this as any).locationInterval = interval;
+    this.watchId = Geolocation.watchPosition(
+      (position) => {
+        const location: LocationData = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+          timestamp: position.timestamp,
+        };
+        callback(location);
+      },
+      (error) => {
+        console.error('Location tracking error:', error);
+      },
+      {
+        enableHighAccuracy: true,
+        distanceFilter: 10, // Update every 10 meters
+        interval: 5000, // Update every 5 seconds
+        fastestInterval: 2000, // Fastest update every 2 seconds
+      }
+    );
   }
 
   // Stop location updates
   stopLocationUpdates(): void {
-    if ((this as any).locationInterval) {
-      clearInterval((this as any).locationInterval);
-      (this as any).locationInterval = null;
+    if (this.watchId !== null) {
+      Geolocation.clearWatch(this.watchId);
+      this.watchId = null;
     }
   }
+
+  // // Alternative method: Get location updates with interval (similar to original)
+  // async getLocationUpdatesWithInterval(callback: (location: LocationData) => void): Promise<void> {
+  //   const interval = setInterval(async () => {
+  //     const location = await this.getCurrentLocation();
+  //     if (location) {
+  //       callback(location);
+  //     }
+  //   }, 15 * 1000); // 15 seconds interval
+
+  //   // Store interval ID for cleanup
+  //   (this as any).locationInterval = interval;
+  // }
+
+  // Stop interval-based location updates
+  // stopLocationUpdatesWithInterval(): void {
+  //   if ((this as any).locationInterval) {
+  //     clearInterval((this as any).locationInterval);
+  //     (this as any).locationInterval = null;
+  //   }
+  // }
 }

@@ -305,7 +305,13 @@ const getNearbyIncidents = async (req, res) => {
       active: true,
       timestamp: { $gte: twentyFourHoursAgo },
       incidentId: { $in: validIncidents.map((i) => i._id) },
-    }).sort({ timestamp: -1 });
+    })
+    .populate({
+          path: "typeId",
+          model: "Type", 
+      })
+      .sort({ timestamp: -1 });
+
     res.status(200).json(nearbyIncidentsForms);
   } catch (error) {
     console.error("Error fetching nearby incidents:", error);
@@ -332,13 +338,16 @@ const getMoreIncidents = async (req, res) => {
     const limit = 10;
     const skip = (chunk - 1) * limit;
 
-    const incidents = await Incident.find({ isFake: false })
+    // ✅ If "all" query param is present and true, remove the filter
+    const filter = req.query.all === "true" ? {} : { isFake: false };
+
+    const incidents = await Incident.find(filter)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .lean();
 
-    const totalIncidents = await Incident.countDocuments({ isFake: false });
+    const totalIncidents = await Incident.countDocuments(filter);
     const incidentIds = incidents.map((i) => i._id);
 
     const forms = incidentIds.length
@@ -363,6 +372,20 @@ const getMoreIncidents = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: "Server error", error });
+  }
+};
+
+const updateIncidentStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { isFake } = req.body;
+    const incident = await Incident.findByIdAndUpdate(id, { isFake }, { new: true });
+    if (!incident) {
+      return res.status(404).json({ message: "Incident not found." });
+    }
+    res.status(200).json(incident);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -399,5 +422,6 @@ module.exports = {
   getIncidentById,
   getNearbyIncidents,
   getMoreIncidents,
+  updateIncidentStatus,
   // tryUploadImageToImgbb,
 };

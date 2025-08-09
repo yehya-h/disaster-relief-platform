@@ -1,16 +1,53 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Alert, ActivityIndicator} from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
-import { useSelector } from 'react-redux';
 import { getCountryNameFromCoords } from '../services/geocoding/geocodingService';
+import { checkAndRequestLocationPermission } from "../services/permissions/locationPermissionService";
+import { LocationService } from '../services/LocationService';
+// import { getCurrentLocation } from '../services/location/locationService';
 
 const LocationPicker = ({ visible, onClose, onLocationSelected, editingLocation }) => {
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [locationName, setLocationName] = useState('');
   const [address, setAddress] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isLocLoading, setIsLocLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [liveLoc, setLiveLoc] = useState(null);
 
-  const liveLoc = useSelector((state) => state.liveLoc.liveLoc);
+  useEffect(() => {
+    const initializeLocation = async () => {
+      try {
+        const hasPermission = await checkAndRequestLocationPermission();
+        if (!hasPermission) {
+          setError('Location permission denied');
+          setIsLocLoading(false);
+          onClose();
+          return;
+        }
+
+        // Get current location
+        // const location = await getCurrentLocation();
+        const locationService = LocationService.getInstance();
+        const location = await locationService.getCurrentLocation();
+
+        setLiveLoc({
+          latitude: location?.latitude ?? 34, // Fallback to 34 if null
+          longitude: location?.longitude ?? 35 // Fallback to 35 if null
+        });
+        setIsLocLoading(false);
+      } catch (err) {
+        setError(err.message);
+        setIsLocLoading(false);
+        setLiveLoc({ latitude: 34, longitude: 35 }); // Guaranteed fallback
+        onClose();
+      }
+    };
+
+    if (visible) {
+      initializeLocation();
+    }
+  }, [visible, onClose]);
 
   useEffect(() => {
     if (visible) {
@@ -101,26 +138,34 @@ const LocationPicker = ({ visible, onClose, onLocationSelected, editingLocation 
         </View>
 
         <View style={styles.mapContainer}>
-          <MapView
-            provider={PROVIDER_GOOGLE}
-            style={styles.map}
-            initialRegion={{
-              latitude: editingLocation ? editingLocation.coordinates[1] : (liveLoc && liveLoc.latitude) ? liveLoc.latitude : 0,
-              longitude: editingLocation ? editingLocation.coordinates[0] : (liveLoc && liveLoc.longitude) ? liveLoc.longitude : 0,
-              latitudeDelta: 0.01,
-              longitudeDelta: 0.01,
-            }}
-            onPress={handleMapPress}
-          >
-            {selectedLocation && selectedLocation.latitude && selectedLocation.longitude && (
-              <Marker
-                coordinate={selectedLocation}
-                title="Selected Location"
-                description={locationName || 'Location'}
-                pinColor="red"
-              />
-            )}
-          </MapView>
+          {isLocLoading ? (
+            // Show loader while location is loading
+            <View style={styles.loaderContainer}>
+              <ActivityIndicator size="large" color="#0000ff" />
+              <Text style={styles.loadingText}>Loading map...</Text>
+            </View>
+          ) : (
+            <MapView
+              provider={PROVIDER_GOOGLE}
+              style={styles.map}
+              initialRegion={{
+                latitude: editingLocation ? editingLocation.coordinates[1] : (liveLoc && liveLoc.latitude) ? liveLoc.latitude : 0,
+                longitude: editingLocation ? editingLocation.coordinates[0] : (liveLoc && liveLoc.longitude) ? liveLoc.longitude : 0,
+                latitudeDelta: 0.01,
+                longitudeDelta: 0.01,
+              }}
+              onPress={handleMapPress}
+            >
+              {selectedLocation && selectedLocation.latitude && selectedLocation.longitude && (
+                <Marker
+                  coordinate={selectedLocation}
+                  title="Selected Location"
+                  description={locationName || 'Location'}
+                  pinColor="red"
+                />
+              )}
+            </MapView>
+          )}
         </View>
 
         {selectedLocation && selectedLocation.latitude && selectedLocation.longitude && (
@@ -191,6 +236,16 @@ const styles = StyleSheet.create({
   },
   map: {
     flex: 1,
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
   },
   locationInfo: {
     padding: 20,

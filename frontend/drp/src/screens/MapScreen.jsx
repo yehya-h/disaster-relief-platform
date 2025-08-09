@@ -3,9 +3,7 @@ import DisasterMap from '../components/DisasterMap';
 import { fetchShelters } from '../redux/shelterSlice';
 import { fetchLatestIncidents } from '../redux/incidentSlice';
 import { useDispatch, useSelector } from 'react-redux';
-// import { getCurrentLocation } from '../services/location/locationService';
 import { checkAndRequestLocationPermission } from '../services/permissions/locationPermissionService';
-// import { getCountryNameFromCoords } from '../services/geocoding/geocodingService';
 import { Image, View, ActivityIndicator, Text, StyleSheet } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useDrawerStatus } from '@react-navigation/drawer';
@@ -13,14 +11,14 @@ import { LocationService } from '../services/LocationService';
 
 export default function MapScreen() {
   const [location, setLocation] = useState(null);
-  // const [locationName, setLocationName] = useState('');
   const [locationLoading, setLocationLoading] = useState(true);
   const [error, setError] = useState(null);
   const [mapKey, setMapKey] = useState(0);
   const [dataLoading, setDataLoading] = useState(true);
   const [isMapReady, setIsMapReady] = useState(false);
+  
   const role = useSelector(state => state.user.role);
-  if (role && role !== 1) {
+  if (role !== 1) {
     const drawerStatus = useDrawerStatus();
 
     useEffect(() => {
@@ -32,6 +30,7 @@ export default function MapScreen() {
   }
   const shelters = useSelector(state => state.shelter.shelters);
   const incidents = useSelector(state => state.incident.incidents);
+  const userLocations = useSelector(state => state.user.locations);
   const dispatch = useDispatch();
 
   // Fetch location on component mount
@@ -52,11 +51,6 @@ export default function MapScreen() {
         if (loc) {
           setLocation(loc);
           console.log('Location fetched:', loc);
-          // const name = await getCountryNameFromCoords(
-          //   loc.latitude,
-          //   loc.longitude,
-          // );
-          // setLocationName(name);
         } else {
           setError('Failed to fetch location');
         }
@@ -128,8 +122,8 @@ export default function MapScreen() {
             {locationLoading
               ? 'Getting your location...'
               : !isMapReady
-              ? 'Preparing map...'
-              : 'Loading disaster data...'}
+                ? 'Preparing map...'
+                : 'Loading disaster data...'}
           </Text>
         </View>
       ) : error ? (
@@ -139,8 +133,10 @@ export default function MapScreen() {
           key={mapKey} // 🔁 forces re-render only when mapKey changes
           shelters={shelters || []}
           incidents={incidents || []}
+          userLocations={userLocations || []}
           latitude={location.latitude}
           longitude={location.longitude}
+          setLocation={setLocation}
         />
       ) : (
         <Text style={styles.waitingText}>Waiting for location...</Text>

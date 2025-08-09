@@ -139,7 +139,7 @@ const Status = ({ isSafe }) => {
 const Header = () => (
   <View style={styles.header}>
     <Feather name="map-pin" size={60} color="green" style={styles.icon} />
-    <Text style={styles.locationName}>Where I Am?</Text>
+    <Text style={styles.locationName}>Where Am I?</Text>
   </View>
 );
 

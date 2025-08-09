@@ -73,7 +73,6 @@ export const submitIncidentWithApproval = async (formData, analysis, approved) =
 
 //   return response.data;
 // };
-
 export const getLatestIncidents = async () => {
   try {
     const response = await api.get(`/incidents/latest`);
@@ -84,11 +83,16 @@ export const getLatestIncidents = async () => {
   }
 };
 
-export const getNearbyIncidents = async (latitude, longitude) => {
+export const getNearbyIncidents = async (longitude, latitude) => {
   try {
     const response = await api.get(`/incidents/nearby`, {
-      params: { latitude, longitude },
+      params: { longitude, latitude },
     });
+    console.log('Nearby incidents response:', response.data);
+    if (!response.data || response.data.length === 0) { 
+      console.warn('No nearby incidents found for coordinates:', { latitude, longitude });
+      return [];
+    }
     return response.data;
   } catch (error) {
     console.error('Error fetching nearby incidents:', error);

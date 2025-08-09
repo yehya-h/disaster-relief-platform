@@ -1,4 +1,4 @@
-const getDistanceInMeters = (lat1, lon1, lat2, lon2) => {
+export const getDistanceInMeters = (lat1, lon1, lat2, lon2) => {
   const toRad = x => (x * Math.PI) / 180;
 
   const R = 6371e3; // Earth's radius in meters
@@ -20,3 +20,25 @@ export const isWithinDistance = (lat1, lon1, lat2, lon2, distance) => {
   const dist = getDistanceInMeters(lat1, lon1, lat2, lon2);
   return dist <= distance;
 }
+
+// Check if user is in any hit area
+export const isInHitArea = (userLat, userLng, hitAreas) => {
+  if (!hitAreas || hitAreas.length === 0) {
+    return false;
+  }
+
+  for (const hitArea of hitAreas) {
+    const distance = getDistanceInMeters(
+      userLat,
+      userLng,
+      hitArea.lat,
+      hitArea.lng
+    );
+    
+    if (distance <= hitArea.radius) {
+      return true;
+    }
+  }
+  
+  return false;
+};

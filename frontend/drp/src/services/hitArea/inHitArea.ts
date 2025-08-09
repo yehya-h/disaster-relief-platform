@@ -5,6 +5,7 @@ import {getNearbyIncidents} from '../../api/incidentApi';
 export async function inHitArea(longitude: number, latitude: number): Promise<boolean> {
     try {
         const incidents = await getNearbyIncidents(longitude, latitude);
+        console.log('incidents: ', incidents);
         return incidents.length > 0;
     } catch (error) {
         console.error('Error fetching nearby incidents:', error);
