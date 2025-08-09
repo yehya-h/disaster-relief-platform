@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Alert, ActivityIndicator} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Alert, ActivityIndicator } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { getCountryNameFromCoords } from '../services/geocoding/geocodingService';
 import { checkAndRequestLocationPermission } from "../services/permissions/locationPermissionService";
 import { LocationService } from '../services/LocationService';
-// import { getCurrentLocation } from '../services/location/locationService';
+import Colors from '../constants/colors';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 const LocationPicker = ({ visible, onClose, onLocationSelected, editingLocation }) => {
   const [selectedLocation, setSelectedLocation] = useState(null);
@@ -14,6 +15,17 @@ const LocationPicker = ({ visible, onClose, onLocationSelected, editingLocation 
   const [isLocLoading, setIsLocLoading] = useState(true);
   const [error, setError] = useState(null);
   const [liveLoc, setLiveLoc] = useState(null);
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({ title: '', message: '' });
+
+  const showCustomAlert = (title, message) => {
+    setAlertConfig({ title, message });
+    setShowAlert(true);
+  };
+
+  const hideAlert = () => {
+    setShowAlert(false);
+  };
 
   useEffect(() => {
     const initializeLocation = async () => {
@@ -78,7 +90,8 @@ const LocationPicker = ({ visible, onClose, onLocationSelected, editingLocation 
 
   const handleConfirmLocation = async () => {
     if (!selectedLocation || !selectedLocation.latitude || !selectedLocation.longitude || !locationName.trim()) {
-      Alert.alert('Error', 'Please enter a location name or select a valid location on the map');
+      // Alert.alert('Error', 'Please enter a location name or select a valid location on the map');
+      showCustomAlert('Error', 'Please enter a location name or select a valid location on the map');
       return;
     }
 
@@ -100,7 +113,8 @@ const LocationPicker = ({ visible, onClose, onLocationSelected, editingLocation 
       onClose();
     } catch (error) {
       console.error('Error getting address:', error);
-      Alert.alert('Error', 'Failed to get address for the selected location');
+      // Alert.alert('Error', 'Failed to get address for the selected location');
+      showCustomAlert('Error', 'Failed to get address for the selected location');
     } finally {
       setIsLoading(false);
     }
@@ -120,74 +134,113 @@ const LocationPicker = ({ visible, onClose, onLocationSelected, editingLocation 
       presentationStyle="pageSheet"
     >
       <View style={styles.container}>
+        {/* <StatusBar barStyle="light-content" backgroundColor={Colors.darkestBlueGray} /> */}
+
+        {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>{editingLocation ? 'Edit Location' : 'Select Location'}</Text>
-          <TouchableOpacity onPress={handleCancel} style={styles.closeButton}>
-            <Text style={styles.closeButtonText}>Cancel</Text>
+          <TouchableOpacity onPress={handleCancel} style={styles.backButton}>
+            <Icon name="close" size={24} color={Colors.textColor} />
           </TouchableOpacity>
+          <Text style={styles.title}>{editingLocation ? 'Edit Location' : 'Select Location'}</Text>
+          <View style={styles.placeholder} />
         </View>
 
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter location name (e.g., Home, Work)"
-            value={locationName}
-            onChangeText={setLocationName}
-            maxLength={50}
-          />
+        {/* Location Name Input */}
+        <View style={styles.inputSection}>
+          <View style={styles.inputContainer}>
+            <Icon name="pencil-outline" size={20} color={Colors.textSecondary} style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Enter location name (e.g., Home, Work)"
+              placeholderTextColor={Colors.textSecondary}
+              value={locationName}
+              onChangeText={setLocationName}
+              maxLength={50}
+            />
+          </View>
         </View>
 
-        <View style={styles.mapContainer}>
-          {isLocLoading ? (
-            // Show loader while location is loading
-            <View style={styles.loaderContainer}>
-              <ActivityIndicator size="large" color="#0000ff" />
-              <Text style={styles.loadingText}>Loading map...</Text>
+        {/* Map Container */}
+        <View style={styles.mapSection}>
+          <View style={styles.mapContainer}>
+            {isLocLoading ? (
+              // Show loader while location is loading
+              <View style={styles.loaderContainer}>
+                <ActivityIndicator size="large" color={Colors.orange} />
+                <Text style={styles.loadingText}>Loading map...</Text>
+              </View>
+            ) : (
+              <MapView
+                provider={PROVIDER_GOOGLE}
+                style={styles.map}
+                initialRegion={{
+                  latitude: editingLocation ? editingLocation.coordinates[1] : (liveLoc && liveLoc.latitude) ? liveLoc.latitude : 0,
+                  longitude: editingLocation ? editingLocation.coordinates[0] : (liveLoc && liveLoc.longitude) ? liveLoc.longitude : 0,
+                  latitudeDelta: 0.01,
+                  longitudeDelta: 0.01,
+                }}
+                onPress={handleMapPress}
+              >
+                {selectedLocation && selectedLocation.latitude && selectedLocation.longitude && (
+                  <Marker
+                    coordinate={selectedLocation}
+                    title="Selected Location"
+                    description={locationName || 'Location'}
+                    pinColor={Colors.orange}
+                  />
+                )}
+              </MapView>
+            )}
+          </View>
+
+          {/* Location Info Card */}
+          {selectedLocation && selectedLocation.latitude && selectedLocation.longitude && (
+            <View style={styles.locationInfoCard}>
+              <View style={styles.locationInfoHeader}>
+                <Icon name="location" size={20} color={Colors.orange} />
+                <Text style={styles.locationInfoTitle}>Selected Location</Text>
+              </View>
+              <Text style={styles.coordinatesText}>
+                {selectedLocation.latitude.toFixed(6)}, {selectedLocation.longitude.toFixed(6)}
+              </Text>
+              {address && <Text style={styles.addressText}>{address}</Text>}
             </View>
-          ) : (
-            <MapView
-              provider={PROVIDER_GOOGLE}
-              style={styles.map}
-              initialRegion={{
-                latitude: editingLocation ? editingLocation.coordinates[1] : (liveLoc && liveLoc.latitude) ? liveLoc.latitude : 0,
-                longitude: editingLocation ? editingLocation.coordinates[0] : (liveLoc && liveLoc.longitude) ? liveLoc.longitude : 0,
-                latitudeDelta: 0.01,
-                longitudeDelta: 0.01,
-              }}
-              onPress={handleMapPress}
-            >
-              {selectedLocation && selectedLocation.latitude && selectedLocation.longitude && (
-                <Marker
-                  coordinate={selectedLocation}
-                  title="Selected Location"
-                  description={locationName || 'Location'}
-                  pinColor="red"
-                />
-              )}
-            </MapView>
           )}
         </View>
 
-        {selectedLocation && selectedLocation.latitude && selectedLocation.longitude && (
-          <View style={styles.locationInfo}>
-            <Text style={styles.locationText}>
-              Selected: {selectedLocation.latitude.toFixed(6)}, {selectedLocation.longitude.toFixed(6)}
-            </Text>
-            {address && <Text style={styles.addressText}>{address}</Text>}
-          </View>
-        )}
-
-        <View style={styles.buttonContainer}>
+        {/* Bottom Action Button */}
+        <View style={styles.footer}>
           <TouchableOpacity
-            style={[styles.button, styles.confirmButton]}
+            style={[styles.confirmButton, isLoading && styles.confirmButtonDisabled]}
             onPress={handleConfirmLocation}
             disabled={isLoading}
           >
-            <Text style={styles.buttonText}>
+            <Text style={styles.confirmButtonText}>
               {isLoading ? 'Processing...' : (editingLocation ? 'Update Location' : 'Confirm Location')}
             </Text>
+            {!isLoading && (
+              <Icon name="checkmark-circle" size={20} color="#fff" style={styles.buttonIcon} />
+            )}
           </TouchableOpacity>
         </View>
+
+        {/* Custom Alert Modal */}
+        <Modal
+          visible={showAlert}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={hideAlert}
+        >
+          <View style={styles.alertOverlay}>
+            <View style={styles.alertContainer}>
+              <Text style={styles.alertTitle}>{alertConfig.title}</Text>
+              <Text style={styles.alertMessage}>{alertConfig.message}</Text>
+              <TouchableOpacity style={styles.alertButton} onPress={hideAlert}>
+                <Text style={styles.alertButtonText}>OK</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </View>
     </Modal>
   );
@@ -196,43 +249,64 @@ const LocationPicker = ({ visible, onClose, onLocationSelected, editingLocation 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: Colors.darkestBlueGray,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    paddingTop: 50,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.blueGray,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   title: {
     fontSize: 18,
     fontWeight: 'bold',
+    color: Colors.textColor,
   },
-  closeButton: {
-    padding: 8,
+  placeholder: {
+    width: 40, // Same width as back button for center alignment
   },
-  closeButtonText: {
-    color: '#007AFF',
-    fontSize: 16,
+  inputSection: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
   },
   inputContainer: {
-    padding: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.blueGray,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    height: 56,
+    borderWidth: 1,
+    borderColor: Colors.orange,
+  },
+  inputIcon: {
+    marginRight: 12,
   },
   input: {
-    height: 50,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 15,
+    flex: 1,
+    color: Colors.textColor,
     fontSize: 16,
+  },
+  mapSection: {
+    flex: 1,
+    paddingHorizontal: 20,
   },
   mapContainer: {
     flex: 1,
-    margin: 20,
-    borderRadius: 10,
+    borderRadius: 16,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: Colors.orange,
   },
   map: {
     flex: 1,
@@ -241,40 +315,116 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: Colors.blueGray,
   },
   loadingText: {
-    marginTop: 10,
+    marginTop: 16,
     fontSize: 16,
+    color: Colors.textColor,
   },
-  locationInfo: {
-    padding: 20,
-    backgroundColor: '#f8f9fa',
+  locationInfoCard: {
+    backgroundColor: Colors.blueGray,
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: Colors.orange,
   },
-  locationText: {
+  locationInfoHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  locationInfoTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.textColor,
+    marginLeft: 8,
+  },
+  coordinatesText: {
     fontSize: 14,
-    color: '#666',
-    marginBottom: 5,
+    color: Colors.textSecondary,
+    fontFamily: 'monospace',
+    marginBottom: 4,
   },
   addressText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#333',
+    fontSize: 14,
+    color: Colors.textColor,
+    lineHeight: 20,
   },
-  buttonContainer: {
+  footer: {
     padding: 20,
   },
-  button: {
-    height: 50,
-    borderRadius: 8,
+  confirmButton: {
+    backgroundColor: Colors.orange,
+    borderRadius: 12,
+    height: 56,
+    flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: Colors.orange,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
-  confirmButton: {
-    backgroundColor: '#007AFF',
+  confirmButtonDisabled: {
+    backgroundColor: Colors.textSecondary,
+    shadowOpacity: 0,
+    elevation: 0,
   },
-  buttonText: {
-    color: 'white',
+  confirmButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    marginRight: 8,
+  },
+  buttonIcon: {
+    marginLeft: 4,
+  },
+  // Custom Alert Styles
+  alertOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  alertContainer: {
+    backgroundColor: Colors.blueGray,
+    borderRadius: 12,
+    padding: 24,
+    width: '90%',
+    maxWidth: 300,
+    borderWidth: 1,
+    borderColor: Colors.orange,
+  },
+  alertTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: Colors.textColor,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  alertMessage: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  alertButton: {
+    backgroundColor: Colors.orange,
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    alignSelf: 'center',
+  },
+  alertButtonText: {
+    color: '#fff',
     fontSize: 16,
     fontWeight: '600',
   },

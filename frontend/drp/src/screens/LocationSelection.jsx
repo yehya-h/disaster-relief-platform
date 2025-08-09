@@ -1,20 +1,36 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Modal } from 'react-native';
 import LocationPicker from '../components/LocationPicker';
 import { registerUser } from '../api/AuthApi';
 import { useDispatch, useSelector } from 'react-redux';
 import { addLocation, removeLocation, updateLocation, clearSignupData } from '../redux/signupLocationsSlice';
 import { sendEmailVerification, signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../utils/firebase';
+import Colors from '../constants/colors';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 const LocationSelection = ({ navigation, route }) => {
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingLocationIndex, setEditingLocationIndex] = useState(null);
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({ title: '', message: '', onConfirm: null });
   const dispatch = useDispatch();
 
   // Get locations and user data from Redux state
   const { locations, userData } = useSelector((state) => state.signupLocations);
+
+  const showCustomAlert = (title, message, onConfirm = null) => {
+    setAlertConfig({ title, message, onConfirm });
+    setShowAlert(true);
+  };
+
+  const hideAlert = () => {
+    setShowAlert(false);
+    if (alertConfig.onConfirm) {
+      alertConfig.onConfirm();
+    }
+  };
 
   const handleLocationSelected = (locationData) => {
     if (editingLocationIndex !== null) {
@@ -42,12 +58,14 @@ const LocationSelection = ({ navigation, route }) => {
 
   const handleSubmit = async () => {
     if (locations.length === 0) {
-      Alert.alert('No Locations', 'Please add at least one location to continue');
+      // Alert.alert('No Locations', 'Please add at least one location to continue');
+      showCustomAlert('No Locations', 'Please add at least one location to continue');
       return;
     }
 
     if (!userData) {
-      Alert.alert('Error', 'User data not found. Please go back and try again.');
+      // Alert.alert('Error', 'User data not found. Please go back and try again.');
+      showCustomAlert('Error', 'User data not found. Please go back and try again.');
       return;
     }
 
@@ -67,12 +85,13 @@ const LocationSelection = ({ navigation, route }) => {
       console.log("Signup response:", res);
 
       if (!res || !res.message) {
-        Alert.alert('Signup failed', 'Invalid response from server');
+        // Alert.alert('Signup failed', 'Invalid response from server');
+        showCustomAlert('Signup failed', 'Invalid response from server');
         return;
       }
 
       if (res.status == 201) {
-        
+
         try {
           // Sign in user immediately after backend registration
           const userCredential = await signInWithEmailAndPassword(auth, userData.email, userData.password);
@@ -81,28 +100,24 @@ const LocationSelection = ({ navigation, route }) => {
           // Send email verification
           await sendEmailVerification(user);
 
-          Alert.alert(
-            'Registration Successful! 🎉',
+          showCustomAlert(
+            'Registration Successful!',
             'Your account has been created successfully! Please check your email for a verification link. Once verified, you can login with your credentials.',
-            [
-              {
-                text: 'OK',
-                onPress: () => {
-                  // Navigate to login screen with pre-filled email and password
-                  navigation.navigate('SignIn', {
-                    prefillEmail: userData.email,
-                    prefillPassword: userData.password
-                  });
-                }
-              }
-            ]
+            () => {
+              // Navigate to login screen with pre-filled email and password
+              navigation.navigate('SignIn', {
+                prefillEmail: userData.email,
+                prefillPassword: userData.password
+              });
+            }
           );
 
           await auth.signOut();
 
         } catch (firebaseError) {
           console.error('Firebase sign-in or verification error:', firebaseError);
-          Alert.alert('Error', 'Could not send verification email. Please try logging in.');
+          // Alert.alert('Error', 'Could not send verification email. Please try logging in.');
+          showCustomAlert('Error', 'Could not send verification email. Please try logging in.');
         }
       }
       // Clear signup data from Redux
@@ -110,27 +125,41 @@ const LocationSelection = ({ navigation, route }) => {
 
     } catch (error) {
       console.log('Error during signup:', error);
-      Alert.alert('Error', error.response?.data?.message || 'Failed to complete signup. Please try again.');
+      // Alert.alert('Error', error.response?.data?.message || 'Failed to complete signup. Please try again.');
+      showCustomAlert('Error', error.response?.data?.message || 'Failed to complete signup. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const goBack = () => {
+    navigation.goBack();
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Add Your Locations</Text>
-        <Text style={styles.subtitle}>
-          Enter at least one location to be notified if a disaster happens nearby
-        </Text>
+        <TouchableOpacity onPress={goBack} style={styles.backButton}>
+          <Icon name="chevron-back" size={24} color={Colors.textColor} />
+        </TouchableOpacity>
+        <View style={styles.headerContent}>
+          <Text style={styles.title}>Add Your{'\n'}Locations</Text>
+          <Text style={styles.subtitle}>
+            Enter at least one location to be notified if a disaster happens nearby
+          </Text>
+        </View>
       </View>
 
-      <ScrollView style={styles.content}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.locationsContainer}>
           {locations.map((location, index) => (
             <View key={index} style={styles.locationCard}>
-              <View style={styles.locationInfo}>
+              <View style={styles.locationHeader}>
+                <Icon name="location" size={20} color={Colors.orange} />
                 <Text style={styles.locationName}>{location.name}</Text>
+              </View>
+
+              <View style={styles.locationInfo}>
                 <Text style={styles.locationAddress}>{location.address}</Text>
                 <Text style={styles.locationCoords}>
                   {location.coordinates && location.coordinates[1] && location.coordinates[0]
@@ -139,17 +168,20 @@ const LocationSelection = ({ navigation, route }) => {
                   }
                 </Text>
               </View>
+
               <View style={styles.locationActions}>
                 <TouchableOpacity
                   style={[styles.actionButton, styles.editButton]}
                   onPress={() => handleEditLocation(index)}
                 >
+                  <Icon name="pencil" size={16} color="#fff" />
                   <Text style={styles.actionButtonText}>Edit</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.actionButton, styles.removeButton]}
                   onPress={() => handleRemoveLocation(index)}
                 >
+                  <Icon name="trash" size={16} color="#fff" />
                   <Text style={styles.actionButtonText}>Remove</Text>
                 </TouchableOpacity>
               </View>
@@ -161,12 +193,14 @@ const LocationSelection = ({ navigation, route }) => {
               style={styles.addLocationButton}
               onPress={() => setShowLocationPicker(true)}
             >
-              <Text style={styles.addLocationText}>+ Add Location</Text>
+              <Icon name="add-circle-outline" size={24} color={Colors.orange} />
+              <Text style={styles.addLocationText}>Add Location</Text>
             </TouchableOpacity>
           )}
 
           {locations.length === 0 && (
             <View style={styles.emptyState}>
+              <Icon name="location-outline" size={64} color={Colors.textSecondary} />
               <Text style={styles.emptyStateText}>
                 No locations added yet. Tap the button above to add your first location.
               </Text>
@@ -176,7 +210,6 @@ const LocationSelection = ({ navigation, route }) => {
       </ScrollView>
 
       <View style={styles.footer}>
-
         <TouchableOpacity
           style={[
             styles.submitButton,
@@ -188,6 +221,9 @@ const LocationSelection = ({ navigation, route }) => {
           <Text style={styles.submitButtonText}>
             {isSubmitting ? 'Setting up your account...' : 'Complete Signup'}
           </Text>
+          {!isSubmitting && (
+            <Icon name="checkmark-circle" size={20} color="#fff" style={styles.buttonIcon} />
+          )}
         </TouchableOpacity>
       </View>
 
@@ -200,6 +236,23 @@ const LocationSelection = ({ navigation, route }) => {
         onLocationSelected={handleLocationSelected}
         editingLocation={editingLocationIndex !== null ? locations[editingLocationIndex] : null}
       />
+
+      <Modal
+        visible={showAlert}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={hideAlert}
+      >
+        <View style={styles.alertOverlay}>
+          <View style={styles.alertContainer}>
+            <Text style={styles.alertTitle}>{alertConfig.title}</Text>
+            <Text style={styles.alertMessage}>{alertConfig.message}</Text>
+            <TouchableOpacity style={styles.alertButton} onPress={hideAlert}>
+              <Text style={styles.alertButtonText}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -207,154 +260,216 @@ const LocationSelection = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: Colors.darkestBlueGray,
   },
   header: {
-    padding: 20,
-    backgroundColor: '#f8f9fa',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    paddingTop: 50,
+    paddingHorizontal: 20,
+    paddingBottom: 30,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.blueGray,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  headerContent: {
+    alignItems: 'center',
   },
   title: {
-    fontSize: 24,
+    fontSize: 32,
     fontWeight: 'bold',
-    marginBottom: 8,
+    color: Colors.textColor,
     textAlign: 'center',
+    marginBottom: 12,
+    lineHeight: 40,
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
+    color: Colors.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
+    paddingHorizontal: 20,
   },
   content: {
     flex: 1,
-    padding: 20,
+    paddingHorizontal: 20,
   },
   locationsContainer: {
     flex: 1,
+    paddingBottom: 20,
   },
   locationCard: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    backgroundColor: Colors.blueGray,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
+    borderColor: Colors.orange,
   },
-  locationInfo: {
+  locationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 12,
   },
   locationName: {
     fontSize: 18,
     fontWeight: '600',
-    marginBottom: 4,
-    color: '#333',
+    color: Colors.textColor,
+    marginLeft: 8,
+    flex: 1,
+  },
+  locationInfo: {
+    marginBottom: 16,
   },
   locationAddress: {
     fontSize: 14,
-    color: '#666',
-    marginBottom: 2,
+    color: Colors.textSecondary,
+    marginBottom: 4,
+    lineHeight: 20,
   },
   locationCoords: {
     fontSize: 12,
-    color: '#999',
+    color: Colors.textSecondary,
     fontFamily: 'monospace',
+    opacity: 0.7,
   },
   locationActions: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
   },
   actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
+    paddingVertical: 8,
+    borderRadius: 8,
     marginLeft: 8,
   },
   editButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#6B7280',
   },
   removeButton: {
-    backgroundColor: '#FF3B30',
+    backgroundColor: '#FF5722',
   },
   actionButtonText: {
     color: 'white',
     fontSize: 12,
     fontWeight: '500',
+    marginLeft: 4,
   },
   addLocationButton: {
-    backgroundColor: '#34C759',
-    padding: 16,
-    borderRadius: 12,
+    backgroundColor: Colors.blueGray,
+    borderWidth: 2,
+    borderColor: Colors.orange,
+    borderStyle: 'dashed',
+    padding: 20,
+    borderRadius: 16,
     alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 8,
+    flexDirection: 'row',
   },
   addLocationText: {
-    color: 'white',
+    color: Colors.orange,
     fontSize: 16,
     fontWeight: '600',
+    marginLeft: 8,
   },
   emptyState: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 40,
+    paddingVertical: 60,
   },
   emptyStateText: {
     fontSize: 16,
-    color: '#666',
+    color: Colors.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
+    marginTop: 16,
+    paddingHorizontal: 40,
   },
   footer: {
     padding: 20,
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-    backgroundColor: 'white',
+    borderTopColor: Colors.blueGray,
+    backgroundColor: Colors.darkestBlueGray,
   },
   submitButton: {
-    backgroundColor: '#007AFF',
-    padding: 16,
+    backgroundColor: Colors.orange,
     borderRadius: 12,
+    height: 56,
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: Colors.orange,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   submitButtonDisabled: {
-    backgroundColor: '#ccc',
+    backgroundColor: Colors.textSecondary,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   submitButtonText: {
-    color: 'white',
+    color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+    marginRight: 8,
   },
-  backButton: {
-    position: 'absolute',
-    top: 10,
-    left: 10,
-    zIndex: 1,
+  buttonIcon: {
+    marginLeft: 4,
   },
-  backButtonText: {
-    fontSize: 14,
-    color: '#007AFF',
-    fontWeight: '500',
-  },
-  clearAllButton: {
-    backgroundColor: '#FF9500',
-    padding: 12,
-    borderRadius: 8,
+  // Custom Alert Styles
+  alertOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 10,
+    padding: 20,
   },
-  clearAllButtonText: {
-    color: 'white',
+  alertContainer: {
+    backgroundColor: Colors.blueGray,
+    borderRadius: 12,
+    padding: 24,
+    width: '90%',
+    maxWidth: 300,
+    borderWidth: 1,
+    borderColor: Colors.orange,
+  },
+  alertTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: Colors.textColor,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  alertMessage: {
     fontSize: 14,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  alertButton: {
+    backgroundColor: Colors.orange,
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    alignSelf: 'center',
+  },
+  alertButtonText: {
+    color: '#fff',
+    fontSize: 16,
     fontWeight: '600',
   },
 });

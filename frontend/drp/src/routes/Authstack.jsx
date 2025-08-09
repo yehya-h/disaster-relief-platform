@@ -27,11 +27,6 @@ export default function AuthStack({ setIsLoggedIn }) {
       <Stack.Screen 
         name="LocationSelection" 
         component={LocationSelection}
-        options={{
-          headerShown: true,
-          title: 'Add Locations',
-          headerBackTitle: 'Back'
-        }}
       />
     </Stack.Navigator>
   );
