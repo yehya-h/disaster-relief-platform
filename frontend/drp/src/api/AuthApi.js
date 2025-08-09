@@ -14,11 +14,23 @@ export const loginUser = async userData => {
   return response.data;
 };
 
-export const resendVerification = async email => {
-  console.log('fct: resendVerification --- email: ', email);
-  const response = await api.post('/auth/resend-verification', { email });
+// export const resendVerification = async email => {
+//   console.log('fct: resendVerification --- email: ', email);
+//   const response = await api.post('/auth/resend-verification', { email });
+//   return response.data;
+// };
+
+export const CheckResendLimit = async userData => {
+  console.log("fct: check resend");
+  const response = await api.post('/auth/check-resend-limit', userData);
   return response.data;
-};
+}
+
+export const incrementResend = async userData => {
+  console.log("fct: increment resend");
+  const response = await api.post('/auth/increment-resend', userData);
+  return response.data;
+}
 
 //since no token in header
 export const guestToken = async userData => {

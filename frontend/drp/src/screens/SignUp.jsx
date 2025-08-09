@@ -105,6 +105,7 @@ export default function SignUpScreen({ navigation, ...others }) {
                 value={values.fname}
                 onChangeText={handleChange('fname')}
                 onBlur={handleBlur('fname')}
+                maxLength={20}
               />
             </View>
             {touched.fname && errors.fname && <Text style={styles.error}>{errors.fname}</Text>}
@@ -119,6 +120,7 @@ export default function SignUpScreen({ navigation, ...others }) {
                 value={values.lname}
                 onChangeText={handleChange('lname')}
                 onBlur={handleBlur('lname')}
+                maxLength={20}
               />
             </View>
             {touched.lname && errors.lname && <Text style={styles.error}>{errors.lname}</Text>}
@@ -134,6 +136,7 @@ export default function SignUpScreen({ navigation, ...others }) {
                 value={values.email}
                 onChangeText={handleChange('email')}
                 onBlur={handleBlur('email')}
+                maxLength={128}
               />
             </View>
             {touched.email && errors.email && <Text style={styles.error}>{errors.email}</Text>}
@@ -148,6 +151,7 @@ export default function SignUpScreen({ navigation, ...others }) {
                 value={values.password}
                 onChangeText={handleChange('password')}
                 onBlur={handleBlur('password')}
+                maxLength={20}
               />
               <TouchableOpacity
                 onPress={() => setShowPassword(!showPassword)}
@@ -172,6 +176,7 @@ export default function SignUpScreen({ navigation, ...others }) {
                 value={values.cPassword}
                 onChangeText={handleChange('cPassword')}
                 onBlur={handleBlur('cPassword')}
+                maxLength={20}
               />
               <TouchableOpacity
                 onPress={() => setShowConfirmPassword(!showConfirmPassword)}

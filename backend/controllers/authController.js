@@ -11,9 +11,9 @@ const admin = require("../services/firebaseService");
 const register = async (req, res) => {
     console.log("fct: register --- req: ", req.body);
     const session = await mongoose.startSession();
-    session.startTransaction();
-    const { fname, lname, email, password, role, liveLocation, deviceId, locations } = req.body;
     try {
+        await session.startTransaction();
+        const { fname, lname, email, password, role, liveLocation, deviceId, locations } = req.body;
         const existing = await User.findOne({ email }).session(session);
         if (existing) {
             await session.abortTransaction();
@@ -52,7 +52,7 @@ const register = async (req, res) => {
         console.log("err: ", err);
         await session.abortTransaction();
         session.endSession();
-        
+
         // Handle specific Firebase errors
         if (err.code === 'auth/email-already-exists') {
             return res.status(400).json({ message: "An account with this email address already exists. Please use a different email or try signing in." });
@@ -63,16 +63,16 @@ const register = async (req, res) => {
         } else if (err.code === 'auth/operation-not-allowed') {
             return res.status(500).json({ message: "Email/password accounts are not enabled. Please contact support." });
         }
-        
+
         res.status(500).json({ error: err.message });
     }
 }
 
 const login = async (req, res) => {
     const session = await mongoose.startSession();
-    session.startTransaction();
-    const { email, password, liveLocation, deviceId } = req.body;
     try {
+        await session.startTransaction();
+        const { email, password, liveLocation, deviceId } = req.body;
         const user = await User.findOne({ email }).session(session);
         if (!user) {
             await session.abortTransaction();
@@ -102,7 +102,7 @@ const login = async (req, res) => {
             if (!fbUser.emailVerified) {
                 await session.abortTransaction();
                 session.endSession();
-                return res.status(401).json({ 
+                return res.status(401).json({
                     message: "Email not verified! Please check your email for verification link.",
                     resendCount: user.resendCount,
                     maxResends: 3
@@ -122,7 +122,7 @@ const login = async (req, res) => {
                 await user.save({ session });
             }
         }
- 
+
         const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "30d" });
         await LiveLocation.create([{ userId: user._id, location: liveLocation, deviceId: deviceId }], { session });
 
@@ -156,8 +156,8 @@ const login = async (req, res) => {
 
 const logout = async (req, res) => {
     const session = await mongoose.startSession();
-    session.startTransaction();
     try {
+        session.startTransaction();
         const { deviceId, liveLocation } = req.body;
 
         // Delete live location if exists
@@ -223,17 +223,17 @@ const authRole = (...allowedRoles) => {
     }
 }
 
-const resendVerification = async (req, res) => {
+const checkResendLimit = async (req, res) => {
     const { email } = req.body;
     try {
         const user = await User.findOne({ email });
         if (!user) {
-            return res.status(404).json({ message: "Email address not found. Please check your email or sign up for a new account." });
+            return res.status(404).json({ message: "Email address not found." });
         }
 
         const fbUser = await admin.auth().getUserByEmail(email);
         if (!fbUser) {
-            return res.status(401).json({ message: "Email address not found. Please check your email or sign up for a new account." });
+            return res.status(401).json({ message: "Firebase account not found." });
         }
 
         if (fbUser.emailVerified) {
@@ -241,47 +241,63 @@ const resendVerification = async (req, res) => {
                 user.emailVerified = true;
                 await user.save();
             }
-            return res.status(400).json({ message: "Email is already verified. You can now login with your credentials." });
+            return res.status(400).json({ message: "Email is already verified." });
         }
 
-        // Check resend limit
         if (user.resendCount >= 3) {
-            return res.status(429).json({ 
-                message: "Maximum verification emails sent. Please check your email or contact support if you haven't received the verification link.",
+            return res.status(429).json({
+                message: "Maximum verification emails sent.",
                 resendCount: user.resendCount,
                 maxResends: 3
             });
         }
 
-        // Check if enough time has passed since last resend (optional: 5 minutes)
         if (user.lastResendTime) {
             const timeSinceLastResend = Date.now() - user.lastResendTime.getTime();
-            const fiveMinutes = 1 * 60 * 1000; // 1 minutes in milliseconds
-            if (timeSinceLastResend < fiveMinutes) {
-                const remainingTime = Math.ceil((fiveMinutes - timeSinceLastResend) / 1000 / 60);
-                return res.status(429).json({ 
-                    message: `Please wait ${remainingTime} minutes before requesting another verification email.`,
+            const cooldown = 1 * 60 * 1000; // 1 minute
+            if (timeSinceLastResend < cooldown) {
+                const remaining = Math.ceil((cooldown - timeSinceLastResend) / 1000 / 60);
+                return res.status(429).json({
+                    message: `Please wait ${remaining} minutes before requesting again.`,
                     resendCount: user.resendCount,
                     maxResends: 3
                 });
             }
         }
 
-        // Update resend count and timestamp
-        user.resendCount += 1;
-        user.lastResendTime = new Date();
-        await user.save();
-        
-        // Return success - actual email sending will be done by frontend
-        res.status(200).json({ 
-            message: "Verification email sent successfully. Please check your inbox.",
+        res.status(200).json({
+            allowed: true,
             resendCount: user.resendCount,
             maxResends: 3
         });
+
     } catch (err) {
-        console.log("Resend verification error:", err);
+        console.error("Check resend limit error:", err);
         res.status(500).json({ error: err.message });
     }
 };
 
-module.exports = { login, register, authToken, authRole, logout, resendVerification };
+const incrementResend = async (req, res) => {
+    const { email } = req.body;
+    try {
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: "Email address not found." });
+        }
+
+        user.resendCount += 1;
+        user.lastResendTime = new Date();
+        await user.save();
+
+        res.status(200).json({
+            message: "Resend count updated.",
+            resendCount: user.resendCount,
+            maxResends: 3
+        });
+    } catch (err) {
+        console.error("Increment resend error:", err);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+module.exports = { login, register, authToken, authRole, logout, checkResendLimit, incrementResend };

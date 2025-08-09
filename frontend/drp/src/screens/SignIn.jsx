@@ -2,7 +2,7 @@ import { TouchableOpacity, View, TextInput, Button, StyleSheet, Text, Alert, Mod
 import * as yup from 'yup';
 import { Formik } from 'formik';
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { loginUser, resendVerification } from '../api/AuthApi';
+import { CheckResendLimit, incrementResend, loginUser } from '../api/AuthApi';
 import { useDispatch, useSelector } from 'react-redux';
 import { addUser, updateUserDetails } from '../redux/UserSlice';
 import jwtDecode from "jwt-decode";
@@ -15,6 +15,7 @@ import { auth } from '../utils/firebase';
 import { UserDataHelper } from '../services/UserDataHelper';
 import Colors from '../constants/colors';
 import Icon from 'react-native-vector-icons/Ionicons';
+import api from '../api/Interceptor';
 
 export default function SignIn({ navigation, route, ...others }) {
   const dispatch = useDispatch();
@@ -69,23 +70,24 @@ export default function SignIn({ navigation, route, ...others }) {
       const userCredential = await signInWithEmailAndPassword(auth, resendEmail, currentPassword);
       const user = userCredential.user;
 
-      // Password is correct, now check with backend for tracking and limits
-      const backendResponse = await resendVerification(resendEmail);
+      const limitResponse = await CheckResendLimit({email: resendEmail});
+      if (!limitResponse.allowed) {
+        setResendCount(limitResponse.resendCount);
+        setMaxResends(limitResponse.maxResends);
+        return showCustomAlert('Error', limitResponse.message);
+      }
 
       // If backend allows, send email verification via Firebase
       await sendEmailVerification(user);
 
-      // Update local state with backend response
-      setResendCount(backendResponse.resendCount);
-      setMaxResends(backendResponse.maxResends);
+      const incrementResponse = await incrementResend({email: resendEmail});
 
-      // Alert.alert(
-      //   'Verification Email Sent',
-      //   `A new verification email has been sent to your email address. Please check your inbox and click the verification link.\n\nAttempts used: ${backendResponse.resendCount}/${backendResponse.maxResends}`,
-      //   [{ text: 'OK' }]
-      // );
-      showCustomAlert('Verification Email Sent', 
-        `A new verification email has been sent to your email address. Please check your inbox and click the verification link.\n\nAttempts used: ${backendResponse.resendCount}/${backendResponse.maxResends}`,
+      // Update local state with backend response
+      setResendCount(incrementResponse.resendCount);
+      setMaxResends(incrementResponse.maxResends);
+
+      showCustomAlert('Verification Email Sent',
+        `A new verification email has been sent to your email address. Please check your inbox and click the verification link.\n\nAttempts used: ${incrementResponse.resendCount}/${incrementResponse.maxResends}`,
       );
       // Sign out from Firebase
       await auth.signOut();
@@ -210,7 +212,7 @@ export default function SignIn({ navigation, route, ...others }) {
           ? `\n\nYou have ${remainingAttempts} verification email attempt${remainingAttempts > 1 ? 's' : ''} remaining.`
           : '\n\nYou have reached the maximum number of verification emails.';
 
-        showCustomAlert('Email Not Verified',`Please check your email and click the verification link before logging in.${attemptsMessage}`);
+        showCustomAlert('Email Not Verified', `Please check your email and click the verification link before logging in.${attemptsMessage}`);
       } else {
         // Alert.alert('Login failed', errorMessage);
         showCustomAlert('Login failed', errorMessage)
@@ -250,6 +252,7 @@ export default function SignIn({ navigation, route, ...others }) {
               value={values.email}
               onChangeText={handleChange('email')}
               onBlur={handleBlur('email')}
+              maxLength={128}
             />
           </View>
           {touched.email && errors.email && <Text style={styles.error}>{errors.email}</Text>}
@@ -264,6 +267,7 @@ export default function SignIn({ navigation, route, ...others }) {
               value={values.password}
               onChangeText={handleChange('password')}
               onBlur={handleBlur('password')}
+              maxLength={20}
             />
             <TouchableOpacity
               onPress={() => setShowPassword(!showPassword)}
