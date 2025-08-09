@@ -10,11 +10,11 @@ const { triggerNotification } = require("../services/notificationService");
 const analyzeIncidentController = async (req, res) => {
   try {
     const incidentAnalysis = req.incidentAnalysis;
-    
+
     if (!incidentAnalysis.is_incident) {
       return res.status(422).json({
         message: "This report does not appear to be a real incident.",
-        analysis: incidentAnalysis
+        analysis: incidentAnalysis,
       });
     }
 
@@ -35,7 +35,7 @@ const analyzeIncidentController = async (req, res) => {
         severity: incidentAnalysis.severity,
         type: incidentAnalysis.type,
         imageUrl: imageUrl || null,
-      }
+      },
     });
   } catch (error) {
     console.error("Analysis error:", error);
@@ -46,23 +46,19 @@ const analyzeIncidentController = async (req, res) => {
 const addIncident = async (req, res) => {
   let session;
   try {
-    const { 
-      formData, 
-      analysis, 
-      approved 
-    } = req.body;
+    const { formData, analysis, approved } = req.body;
 
     // Check if user approved the analysis
     if (!approved) {
       return res.status(400).json({
-        message: "Incident submission was not approved."
+        message: "Incident submission was not approved.",
       });
     }
 
     // Validate analysis data
     if (!analysis || !analysis.is_incident) {
       return res.status(422).json({
-        message: "Invalid or missing analysis data."
+        message: "Invalid or missing analysis data.",
       });
     }
 
@@ -104,7 +100,7 @@ const addIncident = async (req, res) => {
         typeId: typeId,
         severity: analysis.severity.toLowerCase(),
       });
-      
+
       const savedIncident = await newIncidentForm.save({ session });
       await session.commitTransaction();
       session.endSession();
@@ -146,7 +142,7 @@ const addIncident = async (req, res) => {
 
       return res.status(201).json({
         message: "Incident created successfully.",
-        data: savedIncident
+        data: savedIncident,
       });
     }
   } catch (error) {
@@ -158,7 +154,6 @@ const addIncident = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
 
 // const addIncident = async (req, res) => {
 //   let session;
@@ -335,7 +330,7 @@ const getIncidentById = async (req, res) => {
 const getMoreIncidents = async (req, res) => {
   try {
     const chunk = parseInt(req.query.chunk) || 1;
-    const limit = 10;
+    const limit = 5;
     const skip = (chunk - 1) * limit;
 
     // ✅ If "all" query param is present and true, remove the filter

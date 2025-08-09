@@ -2,20 +2,23 @@
 import api from './Interceptor';
 
 // Step 1: Submit form for analysis
-export const submitForAnalysis = async (formData) => {
+export const submitForAnalysis = async formData => {
   const data = new FormData();
   data.append('image', {
     uri: formData.image.uri,
     type: formData.image.type,
     name: formData.image.name,
   });
-  data.append('incident', JSON.stringify({
-    type: formData.type,
-    severity: formData.severity,
-    description: formData.description,
-    location: formData.location,
-    timestamp: formData.timestamp
-  }));
+  data.append(
+    'incident',
+    JSON.stringify({
+      type: formData.type,
+      severity: formData.severity,
+      description: formData.description,
+      location: formData.location,
+      timestamp: formData.timestamp,
+    }),
+  );
 
   try {
     const response = await api.post('/incidents/analyze', data, {
@@ -31,18 +34,26 @@ export const submitForAnalysis = async (formData) => {
 };
 
 // Step 2: Submit after user approval (passing analysis back)
-export const submitIncidentWithApproval = async (formData, analysis, approved) => {
+export const submitIncidentWithApproval = async (
+  formData,
+  analysis,
+  approved,
+) => {
   try {
-    const response = await api.post('/incidents/add', {
-      formData: formData,
-      analysis: analysis,
-      approved: approved
-    }, {
-      headers: {
-        'Content-Type': 'application/json',
+    const response = await api.post(
+      '/incidents/add',
+      {
+        formData: formData,
+        analysis: analysis,
+        approved: approved,
       },
-    });
-    
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+
     console.log('Incident submitted:', response.data);
     return response.data;
   } catch (error) {
@@ -96,6 +107,16 @@ export const getNearbyIncidents = async (longitude, latitude) => {
     return response.data;
   } catch (error) {
     console.error('Error fetching nearby incidents:', error);
+    throw error;
+  }
+};
+
+export const getMoreIncidents = async (chunk = 1) => {
+  try {
+    const response = await api.get(`/incidents/load-more?chunk=${chunk}`);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch incidents', error);
     throw error;
   }
 };

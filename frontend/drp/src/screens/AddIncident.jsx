@@ -18,7 +18,7 @@ import {
   TouchableOpacity,
   PermissionsAndroid,
   Alert,
-  ScrollView
+  ScrollView,
 } from 'react-native';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { Formik } from 'formik';
@@ -27,6 +27,8 @@ import { getCurrentLocation } from '../services/location/locationService';
 import AnalysisModal from '../components/AnalysisModal'; // Import the independent component
 // import { ScrollView } from 'react-native-gesture-handler';
 import ImageResizer from 'react-native-image-resizer';
+import Colors from '../constants/colors';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const severityLevels = ['Low', 'Medium', 'High'];
 
@@ -464,7 +466,7 @@ const styles = StyleSheet.create({
   },
   imageButton: {
     flex: 1,
-    backgroundColor: '#007bff',
+    backgroundColor: Colors.orange,
     padding: 12,
     borderRadius: 8,
     alignItems: 'center',

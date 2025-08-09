@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, ActivityIndicator } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import AuthStack from './Authstack.jsx';
 import MainDrawer from './MainDrawer.jsx';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -16,6 +16,7 @@ import TabNavigator from './TabNavigator';
 import { UserDataHelper } from '../services/UserDataHelper';
 import { LocationService } from '../services/LocationService';
 import { getFcmToken } from '../services/fcmService.js';
+import Colors from '../constants/colors.js';
 
 export default function AppNavigator() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -229,7 +230,15 @@ export default function AppNavigator() {
     );
   }
   return (
-    <NavigationContainer>
+    <NavigationContainer
+      theme={{
+        ...DefaultTheme,
+        colors: {
+          ...DefaultTheme.colors,
+          background: Colors.blueGray,
+        },
+      }}
+    >
       {isLoggedIn ? (
         <MainDrawer setIsLoggedIn={setIsLoggedIn} isLoggedIn={isLoggedIn} />
       ) : (

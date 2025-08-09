@@ -17,6 +17,8 @@ import {
 } from './src/services/fcmService';
 import messaging from '@react-native-firebase/messaging';
 import { Alert } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import Colors from './src/constants/colors';
 
 function App() {
   useEffect(() => {
@@ -50,9 +52,18 @@ function App() {
 
   return (
     <Provider store={store}>
-      <AppNavigator />
+      <View style={styles.container}>
+        <AppNavigator />
+      </View>
     </Provider>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.blueGray,
+  },
+});
 
 export default App;
