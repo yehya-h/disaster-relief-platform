@@ -1,6 +1,6 @@
 import React from 'react';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Modal } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logoutUser } from '../api/AuthApi';
@@ -23,62 +23,53 @@ const CustomDrawerContent = props => {
   };
 
   const handleLogout = async () => {
-    Alert.alert('Logout', 'Are you sure you want to logout?', [
-      {
-        text: 'Cancel',
-        style: 'cancel',
-      },
-      {
-        text: 'Logout',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            // Get current location and device ID for logout
-            const loc = await getCurrentLocation();
-            const deviceId = await DeviceInfo.getUniqueId();
+    try {
+      // Get current location and device ID for logout
+      const loc = await getCurrentLocation();
+      const deviceId = await DeviceInfo.getUniqueId();
 
-            const logoutData = {
-              deviceId: deviceId,
-              liveLocation: {
-                type: 'Point',
-                coordinates: [loc.longitude, loc.latitude],
-              },
-            };
-
-            const response = await logoutUser(logoutData);
-
-            if (response && response.token) {
-              // await AsyncStorage.setItem('token', response.token);
-              await UserDataHelper.setAuthToken(response.token);
-              dispatch(removeUser());
-
-              const jwtDecode = require('jwt-decode');
-              const decoded = jwtDecode(response.token);
-              dispatch(
-                addUser({
-                  userId: decoded.id,
-                  role: decoded.role,
-                  fcmToken: '',
-                  deviceId: deviceId,
-                }),
-              );
-            } else {
-              // Clear local storage if no token returned
-              // await AsyncStorage.removeItem('token');
-              await UserDataHelper.clearUserData();
-              dispatch(removeUser());
-            }
-
-            if (props.setIsLoggedIn) {
-              props.setIsLoggedIn(false);
-            }
-          } catch (error) {
-            console.error('Logout error:', error);
-            Alert.alert('Error', 'Failed to logout. Please try again.');
-          }
+      const logoutData = {
+        deviceId: deviceId,
+        liveLocation: {
+          type: 'Point',
+          coordinates: [loc.longitude, loc.latitude],
         },
-      },
-    ]);
+      };
+
+      const response = await logoutUser(logoutData);
+
+      if (response && response.token) {
+        // await AsyncStorage.setItem('token', response.token);
+        await UserDataHelper.setAuthToken(response.token);
+        dispatch(removeUser());
+
+        const jwtDecode = require('jwt-decode');
+        const decoded = jwtDecode(response.token);
+        dispatch(
+          addUser({
+            userId: decoded.id,
+            role: decoded.role,
+            fcmToken: '',
+            deviceId: deviceId,
+          }),
+        );
+      } else {
+        // Clear local storage if no token returned
+        // await AsyncStorage.removeItem('token');
+        await UserDataHelper.clearUserData();
+        dispatch(removeUser());
+      }
+
+      if (props.setIsLoggedIn) {
+        props.setIsLoggedIn(false);
+      }
+
+    } catch (error) {
+      console.error('Logout error:', error);
+
+      // Show error alert with same custom style
+      Alert.alert('Error', 'Failed to logout. Please try again.');
+    }
   };
 
   return (

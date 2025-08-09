@@ -134,9 +134,7 @@ const LocationPicker = ({ visible, onClose, onLocationSelected, editingLocation 
       presentationStyle="pageSheet"
     >
       <View style={styles.container}>
-        {/* <StatusBar barStyle="light-content" backgroundColor={Colors.darkestBlueGray} /> */}
 
-        {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={handleCancel} style={styles.backButton}>
             <Icon name="close" size={24} color={Colors.textColor} />

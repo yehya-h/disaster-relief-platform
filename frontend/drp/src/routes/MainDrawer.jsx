@@ -3,6 +3,8 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 // import { createNativeStackNavigator } from '@react-navigation/native-stack';
 // import MainStack from './MainStack.jsx';
 import Profile from '../screens/Profile.jsx';
+import UpdatePassword from '../screens/UpdatePassword.jsx';
+import UpdateLocations from '../screens/UpdateLocations.jsx';
 // import Posts from '../screens/Posts.jsx';
 import TabNavigator from './TabNavigator.jsx';
 import CustomDrawerContent from '../components/CustomDrawerContent.jsx';
@@ -76,6 +78,26 @@ export default function MainDrawer({ setIsLoggedIn, isLoggedIn }) {
         name="Profile"
         component={Profile}
         options={{
+          // Hide from drawer menu since it's handled by CustomDrawerContent
+          drawerItemStyle: { display: 'none' },
+        }}
+      />
+
+      <Drawer.Screen
+        name="UpdatePassword"
+        component={UpdatePassword}
+        options={{
+          headerShown: false,
+          // Hide from drawer menu since it's handled by CustomDrawerContent
+          drawerItemStyle: { display: 'none' },
+        }}
+      />
+
+      <Drawer.Screen
+        name="UpdateLocations"
+        component={UpdateLocations}
+        options={{
+          headerShown: false,
           // Hide from drawer menu since it's handled by CustomDrawerContent
           drawerItemStyle: { display: 'none' },
         }}
