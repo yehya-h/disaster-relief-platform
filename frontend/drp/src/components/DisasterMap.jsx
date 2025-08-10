@@ -6,7 +6,7 @@ import MapView, {
   Polyline,
   PROVIDER_GOOGLE,
 } from 'react-native-maps';
-import { Text, View, StyleSheet, Alert } from 'react-native';
+import { Text, View, StyleSheet, Alert, Modal, TouchableOpacity } from 'react-native';
 import { isWithinDistance, isInHitArea, getDistanceInMeters } from '../services/location/distanceService';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchIncidentTypes } from '../redux/incidentTypesSlice';
@@ -19,6 +19,7 @@ import UserLocMarker from '../mapComponents/userLocMarker';
 import RouteStartMarker from '../mapComponents/routeStartMarker';
 import RouteEndMarker from '../mapComponents/routeEndMarker';
 import { showSuccessToast } from '../utils/toast';
+import Colors from '../constants/colors';
 
 const DisasterMap = React.memo(
   ({ shelters, incidents, userLocations, latitude, longitude, setLocation }) => {
@@ -456,7 +457,8 @@ const DisasterMap = React.memo(
             console.log(
               `Zoom Level: ${zoom}, Marker Size: ${getMarkerSize(zoom)}`,
             );
-          }}
+          }
+          }
         >
           {/* Shelter Markers */}
           {shelters
@@ -687,33 +689,40 @@ const DisasterMap = React.memo(
           </View>
         )}
 
-        {/* Shelter Navigation Prompt */}
         {showShelterNavigationPrompt && (
-          <View style={styles.shelterPromptOverlay}>
-            <View style={styles.shelterPromptContainer}>
-              <Text style={styles.shelterPromptTitle}>You're Safe!</Text>
-              <Text style={styles.shelterPromptText}>
-                You've successfully evacuated the danger zone! Would you like directions to the nearest emergency shelter?
-              </Text>
-              <View style={styles.shelterPromptButtons}>
-                <Text
-                  style={[styles.shelterPromptButton, styles.shelterPromptButtonPrimary]}
-                  onPress={async () => {
-                    setShowShelterNavigationPrompt(false);
-                    await getSafeRouteForLocation(currentLocation);
-                  }}
-                >
-                  Yes, Show Route
+          <Modal
+            visible={showShelterNavigationPrompt}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={() => setShowShelterNavigationPrompt(false)}
+          >
+            <View style={styles.alertOverlay}>
+              <View style={styles.alertContainer}>
+                <Text style={styles.alertTitle}>You're Safe!</Text>
+                <Text style={styles.alertMessage}>
+                  You've successfully evacuated the danger zone! Would you like directions to the nearest emergency shelter?
                 </Text>
-                <Text
-                  style={[styles.shelterPromptButton, styles.shelterPromptButtonSecondary]}
-                  onPress={() => setShowShelterNavigationPrompt(false)}
-                >
-                  No, Thanks
-                </Text>
+
+                <View style={styles.buttonContainer}>
+                  <TouchableOpacity
+                    style={styles.primaryButton}
+                    onPress={async () => {
+                      setShowShelterNavigationPrompt(false);
+                      await getSafeRouteForLocation(currentLocation);
+                    }}
+                  >
+                    <Text style={styles.primaryButtonText}>Yes, Show Route</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.cancelButton}
+                    onPress={() => setShowShelterNavigationPrompt(false)}
+                  >
+                    <Text style={styles.cancelButtonText}>No, Thanks</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
-          </View>
+          </Modal>
         )}
 
         {/* Manual route recalculation button */}
@@ -849,20 +858,15 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
   },
-  // Shelter navigation prompt styles
-  shelterPromptOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  alertOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 2000,
+    padding: 20,
   },
-  shelterPromptContainer: {
-    backgroundColor: '#ffffff',
+  alertContainer: {
+    backgroundColor: Colors.blueGray,
     padding: 25,
     borderRadius: 16,
     margin: 20,
@@ -876,27 +880,26 @@ const styles = StyleSheet.create({
     elevation: 12,
     minWidth: 280,
   },
-  shelterPromptTitle: {
+  alertTitle: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#4CAF50',
+    color: Colors.textColor,
     textAlign: 'center',
-    marginBottom: 15,
+    marginBottom: 16,
   },
-  shelterPromptText: {
-    fontSize: 16,
-    color: '#333',
+  alertMessage: {
+    fontSize: 14,
+    color: Colors.textSecondary,
     textAlign: 'center',
-    marginBottom: 20,
-    lineHeight: 22,
+    lineHeight: 20,
+    marginBottom: 24,
   },
-  shelterPromptButtons: {
+  buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 12,
   },
-  shelterPromptButton: {
-    flex: 1,
+  cancelButton: {
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 8,
@@ -904,14 +907,28 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     overflow: 'hidden',
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: Colors.textSecondary,
   },
-  shelterPromptButtonPrimary: {
-    backgroundColor: '#4CAF50',
-    color: '#ffffff',
+  cancelButtonText: {
+    color: Colors.textSecondary,
+    fontSize: 16,
+    fontWeight: '600',
   },
-  shelterPromptButtonSecondary: {
-    backgroundColor: '#f5f5f5',
-    color: '#666',
+  primaryButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    overflow: 'hidden',
+    backgroundColor: Colors.orange,
+  },
+  primaryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

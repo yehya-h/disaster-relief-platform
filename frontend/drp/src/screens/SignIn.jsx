@@ -480,8 +480,8 @@ const styles = StyleSheet.create({
     padding: 24,
     width: '90%',
     maxWidth: 300,
-    borderWidth: 1,
-    borderColor: Colors.orange,
+    // borderWidth: 1,
+    // borderColor: Colors.orange,
   },
   alertTitle: {
     fontSize: 20,

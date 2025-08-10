@@ -8,6 +8,7 @@ import { Image, View, ActivityIndicator, Text, StyleSheet } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useDrawerStatus } from '@react-navigation/drawer';
 import { LocationService } from '../services/LocationService';
+import Colors from '../constants/colors';
 
 export default function MapScreen() {
   const [location, setLocation] = useState(null);
@@ -117,7 +118,7 @@ export default function MapScreen() {
     <View style={{ flex: 1 }}>
       {isLoading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="green" />
+          <ActivityIndicator size="large" color="#ff6b35" />
           <Text style={styles.loadingText}>
             {locationLoading
               ? 'Getting your location...'
