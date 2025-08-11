@@ -95,7 +95,7 @@ const addIncident = async (req, res) => {
         description: analysis.reformulated_description,
         location: formData.location,
         timestamp: formData.timestamp,
-        incidentId: nearByIncident._id,
+        incidentId: nearByIncident.incidentId,
         reporterId: req.user.id,
         typeId: typeId,
         severity: analysis.severity.toLowerCase(),

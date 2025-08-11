@@ -18,6 +18,7 @@ import { getCountryNameFromCoords } from "../services/geocoding/geocodingService
 import LocationMap from "../services/map/mapService";
 import { inHitArea, getIncident } from "../services/hitArea/inHitArea";
 import Colors from '../constants/colors';
+import { useSelector } from 'react-redux';
 
 export default function Home() {
   const defaultTips = [
@@ -40,8 +41,17 @@ export default function Home() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isMapReady, setIsMapReady] = useState(false);
 
-  const drawerStatus = useDrawerStatus();
+  const userRole = useSelector(state => state.user.role);
 
+  if (userRole !== undefined && userRole !== null && userRole !== 1) {
+    const drawerStatus = useDrawerStatus();
+
+    useEffect(() => {
+      if (drawerStatus === 'closed') {
+        setMapKey(prev => prev + 1);
+      }
+    }, [drawerStatus]);
+  }
   useEffect(() => {
     if (safetyTips.length > 0) {
       setRandomQuote(
@@ -141,12 +151,6 @@ export default function Home() {
       };
     }, [refreshTrigger])
   );
-
-  useEffect(() => {
-    if (drawerStatus === 'closed') {
-      setMapKey(prev => prev + 1);
-    }
-  }, [drawerStatus]);
 
   useFocusEffect(
     useCallback(() => {

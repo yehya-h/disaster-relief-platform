@@ -19,7 +19,7 @@ export default function MapScreen() {
   const [isMapReady, setIsMapReady] = useState(false);
   
   const role = useSelector(state => state.user.role);
-  if (role !== 1) {
+  if (role !== undefined && role !== null && role !== 1) {
     const drawerStatus = useDrawerStatus();
 
     useEffect(() => {
