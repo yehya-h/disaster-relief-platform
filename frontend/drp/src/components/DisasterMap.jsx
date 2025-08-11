@@ -243,7 +243,7 @@ const DisasterMap = React.memo(
 
     // Get evacuation route for current location
     const getEvacuationRouteForLocation = async (location) => {
-      if (!incidents || incidents.length === 0) return;
+      if (!incidents || incidents?.length === 0) return;
 
       setRouting(true);
       try {
@@ -264,14 +264,14 @@ const DisasterMap = React.memo(
 
           // Extract route start and end points for markers
           const routeCoords = evacuationData.route.features[0].geometry.coordinates;
-          if (routeCoords && routeCoords.length > 0) {
+          if (routeCoords && routeCoords?.length > 0) {
             setRouteStartPoint({
               lat: routeCoords[0][1],
               lng: routeCoords[0][0]
             });
             setRouteEndPoint({
-              lat: routeCoords[routeCoords.length - 1][1],
-              lng: routeCoords[routeCoords.length - 1][0]
+              lat: routeCoords[routeCoords?.length - 1][1],
+              lng: routeCoords[routeCoords?.length - 1][0]
             });
           }
 
@@ -290,7 +290,7 @@ const DisasterMap = React.memo(
 
     // Get safe route to shelter for current location (only called when user exits hit area)
     const getSafeRouteForLocation = async (location) => {
-      if (!shelters || shelters.length === 0) return;
+      if (!shelters || shelters?.length === 0) return;
 
       filteredShelters = shelters
         .filter(shelter => {
@@ -333,7 +333,7 @@ const DisasterMap = React.memo(
 
           // Extract route start point for shelter route
           const routeCoords = safeRouteData.route.features[0].geometry.coordinates;
-          if (routeCoords && routeCoords.length > 0) {
+          if (routeCoords && routeCoords?.length > 0) {
             console.log('route coods: ', routeCoords);
             setRouteStartPoint({
               lat: routeCoords[0][1],
