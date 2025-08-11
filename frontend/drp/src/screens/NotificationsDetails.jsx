@@ -107,7 +107,7 @@ const NotificationDetails = ({ route }) => {
             <DetailItem
               icon="tag"
               label="Type"
-              value={notification.typeId || 'N/A'}
+              value={notification.typeId.name || 'N/A'}
             />
 
             <DetailItem
