@@ -11,13 +11,10 @@ import {
   View,
   Text,
   TextInput,
-  Button,
   Image,
-  ActivityIndicator,
   StyleSheet,
   TouchableOpacity,
   PermissionsAndroid,
-  Alert,
   ScrollView,
 } from 'react-native';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
@@ -26,15 +23,20 @@ import * as Yup from 'yup';
 import { getCurrentLocation } from '../services/location/locationService';
 import AnalysisModal from '../components/AnalysisModal';
 import CustomAlert from '../components/CustomAlert';
+import CustomLoader from '../components/CustomLoader'; // Import the new CustomLoader
+import CustomProgressBar from '../components/CustomProgressBar'; // Import the new CustomProgressBar
 import ImageResizer from 'react-native-image-resizer';
 import Colors from '../constants/colors';
 import CustomPicker from '../components/CustomPicker';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useFocusEffect } from '@react-navigation/native';
+import { fetchLatestIncidents } from '../redux/incidentSlice';
 
 const severityLevels = ['Low', 'Medium', 'High'];
 
-export default function AddIncident() {
+export default function AddIncident({ navigation }) {
   const types = useSelector(state => state.incidentTypes.incidentTypes);
+  const userRole = useSelector(state => state.user.role);
   const dispatch = useDispatch();
 
   // Original states
@@ -47,6 +49,7 @@ export default function AddIncident() {
   const [analysisResult, setAnalysisResult] = useState(null);
   const [submittingFinal, setSubmittingFinal] = useState(false);
   const [currentFormData, setCurrentFormData] = useState(null);
+  const [analysisComplete, setAnalysisComplete] = useState(false);
 
   // Custom Alert States
   const [alertVisible, setAlertVisible] = useState(false);
@@ -65,6 +68,34 @@ export default function AddIncident() {
   const hideCustomAlert = () => {
     setAlertVisible(false);
   };
+
+  // Check for guest user every time screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      if (userRole === 1) {
+        showCustomAlert(
+          'Login Required',
+          'You need to be logged in to report incidents. Please login or create an account.',
+          [
+            {
+              text: 'Go to Login',
+              onPress: () => {
+                // Navigate to AuthStack tab
+                navigation.navigate('AuthStack');
+              },
+            },
+            {
+              text: 'Not Now',
+              style: 'cancel',
+              onPress: () => {
+                navigation.goBack();
+              },
+            }
+          ]
+        );
+      }
+    }, [userRole, navigation])
+  );
 
   useEffect(() => {
     const fetchData = async () => {
@@ -199,6 +230,7 @@ export default function AddIncident() {
   const submitForAnalysisStep = async (values, { resetForm }) => {
     try {
       setUploading(true);
+      setAnalysisComplete(false);
 
       const liveLocation = await getCurrentLocation();
       if (!liveLocation) {
@@ -226,14 +258,18 @@ export default function AddIncident() {
       const result = await submitForAnalysis(incidentData);
       console.log('Analysis result:', result);
 
+      // Mark analysis as complete
+      setAnalysisComplete(true);
+
       if (result.analysis) {
         if (result.analysis.is_incident) {
           setAnalysisResult(result.analysis);
-          setShowAnalysisModal(true);
+          // The progress bar will handle showing the modal via onComplete
         } else {
+          setUploading(false);
           showCustomAlert(
             'Analysis Complete',
-            result.message ||
+            // result.message ||
               'This report does not appear to be a real incident.',
             [
               {
@@ -256,14 +292,13 @@ export default function AddIncident() {
         }
       }
     } catch (err) {
+      setUploading(false);
       if (err.response?.status === 422) {
         showCustomAlert('Invalid Incident', err.response.data.message);
       } else {
         console.error('Analysis error:', err);
         showCustomAlert('Analysis Failed', 'Please try again later.');
       }
-    } finally {
-      setUploading(false);
     }
   };
 
@@ -289,9 +324,10 @@ export default function AddIncident() {
       if (result) {
         showCustomAlert(
           'Success',
-          result.message ||
+          // result.message ||
             'Your incident report has been submitted successfully!',
         );
+        dispatch(fetchLatestIncidents());
       }
     } catch (error) {
       console.error('Final submission error:', error);
@@ -313,173 +349,187 @@ export default function AddIncident() {
     if (resetForm) resetForm();
   };
 
+  const handleProgressComplete = () => {
+    setUploading(false);
+    setShowAnalysisModal(true);
+  };
+
   const handleModalClose = () => {
     setShowAnalysisModal(false);
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.scrollContainer}>
-      <Formik
-        initialValues={{ type: '', severity: '', description: '', image: null }}
-        validationSchema={IncidentSchema}
-        onSubmit={submitForAnalysisStep}
-      >
-        {({
-          handleChange,
-          handleSubmit,
-          values,
-          errors,
-          setFieldValue,
-          touched,
-          resetForm,
-        }) => (
-          <View style={styles.container}>
-            {/* Photo Capture Section */}
-            <View style={styles.photoSection}>
-              {!imagePreview ? (
-                <TouchableOpacity
-                  style={styles.photoSquare}
-                  onPress={() => showImagePickerOptions(setFieldValue)}
-                >
-                  <MaterialCommunityIcons
-                    name="camera-plus"
-                    size={50}
-                    color={Colors.textColor}
-                    style={styles.cameraIcon}
-                  />
-                  <Text style={styles.photoText}>
-                    Take a photo of the incident
-                  </Text>
-                </TouchableOpacity>
-              ) : (
-                <TouchableOpacity
-                  style={styles.photoSquareWithImage}
-                  onPress={() => showImagePickerOptions(setFieldValue)}
-                >
-                  <Image
-                    source={{ uri: imagePreview }}
-                    style={styles.photoImage}
-                  />
-                  <View style={styles.changePhotoOverlay}>
+    <>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <Formik
+          initialValues={{ type: '', severity: '', description: '', image: null }}
+          validationSchema={IncidentSchema}
+          onSubmit={submitForAnalysisStep}
+        >
+          {({
+            handleChange,
+            handleSubmit,
+            values,
+            errors,
+            setFieldValue,
+            touched,
+            resetForm,
+          }) => (
+            <View style={styles.container}>
+              {/* Photo Capture Section */}
+              <View style={styles.photoSection}>
+                {!imagePreview ? (
+                  <TouchableOpacity
+                    style={styles.photoSquare}
+                    onPress={() => showImagePickerOptions(setFieldValue)}
+                  >
                     <MaterialCommunityIcons
                       name="camera-plus"
-                      size={24}
+                      size={50}
                       color={Colors.textColor}
+                      style={styles.cameraIcon}
                     />
-                    <Text style={styles.changePhotoText}>Change Photo</Text>
-                  </View>
-                </TouchableOpacity>
-              )}
+                    <Text style={styles.photoText}>
+                      Take a photo of the incident
+                    </Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity
+                    style={styles.photoSquareWithImage}
+                    onPress={() => showImagePickerOptions(setFieldValue)}
+                  >
+                    <Image
+                      source={{ uri: imagePreview }}
+                      style={styles.photoImage}
+                    />
+                    <View style={styles.changePhotoOverlay}>
+                      <MaterialCommunityIcons
+                        name="camera-plus"
+                        size={24}
+                        color={Colors.textColor}
+                      />
+                      <Text style={styles.changePhotoText}>Change Photo</Text>
+                    </View>
+                  </TouchableOpacity>
+                )}
 
-              {touched.image && errors.image && (
-                <Text style={styles.error}>{errors.image}</Text>
-              )}
-            </View>
-
-            {/* Form Section */}
-            <View style={styles.formSection}>
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Incident Type</Text>
-                <CustomPicker
-                  selectedValue={values.type}
-                  onValueChange={itemValue => setFieldValue('type', itemValue)}
-                  items={types.map(type => ({
-                    label: type.name,
-                    value: type._id,
-                  }))}
-                  placeholder="Select Type"
-                />
-                {touched.type && errors.type && (
-                  <Text style={styles.error}>{errors.type}</Text>
+                {touched.image && errors.image && (
+                  <Text style={styles.error}>{errors.image}</Text>
                 )}
               </View>
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Severity Level</Text>
-                <View style={styles.severityContainer}>
-                  {severityLevels.map(level => (
-                    <TouchableOpacity
-                      key={level}
-                      onPress={() => setFieldValue('severity', level)}
-                      style={[
-                        styles.severityButton,
-                        values.severity === level &&
-                          styles.severityButtonSelected,
-                      ]}
-                    >
-                      <View style={styles.radioCircle}>
-                        {values.severity === level && (
-                          <View style={styles.selectedDot} />
-                        )}
-                      </View>
-                      <Text
+              {/* Form Section */}
+              <View style={styles.formSection}>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Incident Type</Text>
+                  <CustomPicker
+                    selectedValue={values.type}
+                    onValueChange={itemValue => setFieldValue('type', itemValue)}
+                    items={types.map(type => ({
+                      label: type.name,
+                      value: type._id,
+                    }))}
+                    placeholder="Select Type"
+                  />
+                  {touched.type && errors.type && (
+                    <Text style={styles.error}>{errors.type}</Text>
+                  )}
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Severity Level</Text>
+                  <View style={styles.severityContainer}>
+                    {severityLevels.map(level => (
+                      <TouchableOpacity
+                        key={level}
+                        onPress={() => setFieldValue('severity', level)}
                         style={[
-                          styles.severityText,
+                          styles.severityButton,
                           values.severity === level &&
-                            styles.severityTextSelected,
+                            styles.severityButtonSelected,
                         ]}
                       >
-                        {level}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
+                        <View style={styles.radioCircle}>
+                          {values.severity === level && (
+                            <View style={styles.selectedDot} />
+                          )}
+                        </View>
+                        <Text
+                          style={[
+                            styles.severityText,
+                            values.severity === level &&
+                              styles.severityTextSelected,
+                          ]}
+                        >
+                          {level}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                  {touched.severity && errors.severity && (
+                    <Text style={styles.error}>{errors.severity}</Text>
+                  )}
                 </View>
-                {touched.severity && errors.severity && (
-                  <Text style={styles.error}>{errors.severity}</Text>
-                )}
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Description (optional)</Text>
+                  <TextInput
+                    placeholder="e.g., Smoke seen coming from building..."
+                    multiline
+                    value={values.description}
+                    onChangeText={handleChange('description')}
+                    style={styles.textArea}
+                    placeholderTextColor={Colors.textSecondary}
+                  />
+                </View>
               </View>
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Description (optional)</Text>
-                <TextInput
-                  placeholder="e.g., Smoke seen coming from building..."
-                  multiline
-                  value={values.description}
-                  onChangeText={handleChange('description')}
-                  style={styles.textArea}
-                  placeholderTextColor={Colors.textSecondary}
-                />
-              </View>
-            </View>
-
-            {/* Submit Section */}
-            <View style={styles.submitSection}>
-              {uploading ? (
-                <View style={styles.loadingContainer}>
-                  <ActivityIndicator size="large" color={Colors.orange} />
-                  <Text style={styles.loadingText}>Analyzing incident...</Text>
-                </View>
-              ) : (
+              {/* Submit Section */}
+              <View style={styles.submitSection}>
                 <TouchableOpacity
                   style={styles.analyzeButton}
                   onPress={handleSubmit}
+                  disabled={uploading}
                 >
                   <Text style={styles.analyzeButtonText}>Analyze Report</Text>
                 </TouchableOpacity>
-              )}
+              </View>
+
+              <AnalysisModal
+                visible={showAnalysisModal}
+                analysisResult={analysisResult}
+                submittingFinal={submittingFinal}
+                onApprove={() => handleApproval(resetForm)}
+                onReject={() => handleRejection(resetForm)}
+                onRequestClose={handleModalClose}
+              />
+
+              {/* Custom Alert */}
+              <CustomAlert
+                visible={alertVisible}
+                title={alertData.title}
+                message={alertData.message}
+                buttons={alertData.buttons}
+                onClose={hideCustomAlert}
+              />
             </View>
+          )}
+        </Formik>
+      </ScrollView>
 
-            <AnalysisModal
-              visible={showAnalysisModal}
-              analysisResult={analysisResult}
-              submittingFinal={submittingFinal}
-              onApprove={() => handleApproval(resetForm)}
-              onReject={() => handleRejection(resetForm)}
-              onRequestClose={handleModalClose}
-            />
-
-            {/* Custom Alert */}
-            <CustomAlert
-              visible={alertVisible}
-              title={alertData.title}
-              message={alertData.message}
-              buttons={alertData.buttons}
-              onClose={hideCustomAlert}
-            />
-          </View>
-        )}
-      </Formik>
-    </ScrollView>
+      {/* Custom Loaders and Progress Bar - Outside ScrollView */}
+      <CustomProgressBar
+        visible={uploading}
+        text="Processing your incident report..."
+        onComplete={handleProgressComplete}
+        isAnalysisComplete={analysisComplete}
+      />
+      
+      <CustomLoader
+        visible={submittingFinal}
+        text="Submitting report..."
+      />
+    </>
   );
 }
 
@@ -648,16 +698,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     letterSpacing: 0.5,
-  },
-  loadingContainer: {
-    alignItems: 'center',
-    paddingVertical: 20,
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 16,
-    color: Colors.textColor, // Changed from Colors.orange to Colors.textColor
-    fontWeight: '500',
   },
 
   // Error Styles

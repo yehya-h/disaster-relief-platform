@@ -120,3 +120,26 @@ export const getMoreIncidents = async (chunk = 1) => {
     throw error;
   }
 };
+
+export const getIncidentReportsByReporterId = async reporterId => {
+  try {
+    const response = await api.get(`/reports/${reporterId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching incident reports by reporter ID:', error);
+    throw error;
+  }
+};
+
+export const submitVote = async (incidentId, reportType) => {
+  try {
+    const response = await api.post('/reports', {
+      incidentId,
+      reportType, // 'fake' or 'confirmed'
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error submitting vote:', error);
+    throw error;
+  }
+};

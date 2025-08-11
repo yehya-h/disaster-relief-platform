@@ -43,8 +43,11 @@ incidentSchema.post("save", async function (doc) {
     doc.fakeReportsCount > 1.5 * doc.confirmationCount &&
     doc.isFake !== true
   ) {
-    doc.isFake = true;
-    await doc.save();
+    // Use updateOne to avoid triggering middleware
+    await this.constructor.updateOne(
+      { _id: doc._id }, 
+      { isFake: true }
+    );
   }
 });
 

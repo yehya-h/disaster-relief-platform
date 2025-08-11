@@ -340,7 +340,8 @@ const getMoreIncidents = async (req, res) => {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
-      .lean();
+      .populate('fakeReportsCount confirmationCount')
+      .lean({ virtuals: true });
 
     const totalIncidents = await Incident.countDocuments(filter);
     const incidentIds = incidents.map((i) => i._id);

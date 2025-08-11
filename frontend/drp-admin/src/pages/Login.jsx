@@ -178,7 +178,7 @@ const Login = () => {
           </button>
         </form>
 
-        <div style={{ 
+        {/* <div style={{ 
           marginTop: 'var(--spacing-6)',
           padding: 'var(--spacing-4)',
           backgroundColor: 'var(--color-gray-100)',
@@ -189,7 +189,7 @@ const Login = () => {
           <strong>Environment Variables Required:</strong><br />
           ADMIN_USERNAME and ADMIN_PASSWORD<br />
           should be set in your backend .env file
-        </div>
+        </div> */}
       </div>
     </div>
   );

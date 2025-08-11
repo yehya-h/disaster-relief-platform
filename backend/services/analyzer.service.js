@@ -22,10 +22,10 @@ class AnalyzerService {
       let agentUrl = process.env.AGENT_API_ENDPOINT;
 
       if (!agentUrl && process.env.AGENT_API_IP && process.env.AGENT_API_PORT) {
-        agentUrl = `http://${process.env.AGENT_API_IP}:${process.env.AGENT_API_PORT}/analyze`;
+        agentUrl = `http://${process.env.AGENT_API_IP}:${process.env.AGENT_API_PORT}`;
       }
 
-      const response = await axios.post(agentUrl, formData, {
+      const response = await axios.post(`${agentUrl}/analyze`, formData, {
         headers: {
           ...formData.getHeaders(),
           'Content-Type': 'multipart/form-data'
