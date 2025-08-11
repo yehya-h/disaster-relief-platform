@@ -16,6 +16,8 @@ export async function getCountryNameFromCoords(lat: number, lon: number): Promis
       const country = data.address.country || '';
       // Try to get city, town, or village (Nominatim may use any of these)
       const city = data.address.city || data.address.town || data.address.village || '';
+      const address = data.address.neighbourhood ||"";
+      if(address && city && country) return `${address},${city}, ${country},`;
       if (city && country) return `${city}, ${country}`;
       if (country) return country;
       if (city) return city;

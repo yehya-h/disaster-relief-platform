@@ -19,6 +19,10 @@ const getNotificationsById = async (req, res) => {
         .select('severity ')
         .select('timestamp')
         .select('location')
+        .select("typeId").populate({
+          path: "typeId",
+          model: "Type", 
+      })
         console.log('Fetched forms:', forms);
         res.status(200).json(forms); 
     } catch (error) {

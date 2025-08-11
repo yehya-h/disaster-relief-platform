@@ -1,6 +1,6 @@
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-// import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 // import MainStack from './MainStack.jsx';
 import Profile from '../screens/Profile.jsx';
 import UpdatePassword from '../screens/UpdatePassword.jsx';
@@ -9,10 +9,34 @@ import UpdateLocations from '../screens/UpdateLocations.jsx';
 import TabNavigator from './TabNavigator.jsx';
 import CustomDrawerContent from '../components/CustomDrawerContent.jsx';
 import Notifications from '../screens/Notifications.jsx';
+import NotificationDetails from '../screens/NotificationsDetails.jsx';
 import Colors from '../constants/colors.js';
 
 const Drawer = createDrawerNavigator();
-// const Stack = createNativeStackNavigator();
+const Stack = createNativeStackNavigator();
+
+function NotificationsStack() {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen 
+        name="Notifications" 
+        component={Notifications} 
+        options={{ 
+          title: 'Notifications',
+          headerShown: false 
+        }} 
+      />
+      <Stack.Screen 
+        name="NotificationDetails" 
+        component={NotificationDetails} 
+        options={{ 
+          title: 'Incident Details',
+          headerShown: false 
+        }} 
+      />
+    </Stack.Navigator>
+  );
+}
 
 export default function MainDrawer({ setIsLoggedIn, isLoggedIn }) {
   return (
@@ -67,11 +91,9 @@ export default function MainDrawer({ setIsLoggedIn, isLoggedIn }) {
 
       <Drawer.Screen
         name="Notifications"
-        component={Notifications}
-        options={{
-          // Hide from drawer menu since it's handled by CustomDrawerContent
-          drawerItemStyle: { display: 'none' },
-        }}
+        component={NotificationsStack}
+                options={{ title: 'Notifications', headerShown: false }}
+
       />
 
       <Drawer.Screen
