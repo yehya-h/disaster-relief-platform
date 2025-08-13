@@ -6,7 +6,7 @@
  */
 import 'react-native-reanimated';
 import 'react-native-gesture-handler';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { PermissionsAndroid, Platform } from 'react-native';
 import AppNavigator from './src/routes/AppNavigator';
 import store from './src/redux/store';
@@ -19,8 +19,30 @@ import messaging from '@react-native-firebase/messaging';
 import { Alert } from 'react-native';
 import { View, StyleSheet } from 'react-native';
 import Colors from './src/constants/colors';
+import CustomAlert from './src/components/CustomAlert';
 
 function App() {
+  const [alertConfig, setAlertConfig] = useState({
+    visible: false,
+    title: '',
+    message: '',
+  });
+
+  const showCustomAlert = (title: string, message: string) => {
+    setAlertConfig({
+      visible: true,
+      title: title,
+      message: message,
+    });
+  };
+
+  const hideCustomAlert = () => {
+    setAlertConfig({
+      visible: false,
+      title: '',
+      message: '',
+    });
+  };
   useEffect(() => {
     async function setupNotifications() {
       const granted = await requestNotificationPermission();
@@ -41,7 +63,7 @@ function App() {
 
   useEffect(() => {
     const unsubscribe = messaging().onMessage(async remoteMessage => {
-      Alert.alert(
+      showCustomAlert(
         remoteMessage.notification?.title || '🚨 Notification',
         remoteMessage.notification?.body || 'You have a new alert.',
       );
@@ -54,6 +76,12 @@ function App() {
     <Provider store={store}>
       <View style={styles.container}>
         <AppNavigator />
+        <CustomAlert
+          visible={alertConfig.visible}
+          title={alertConfig.title}
+          message={alertConfig.message}
+          onClose={hideCustomAlert}
+        />
       </View>
     </Provider>
   );

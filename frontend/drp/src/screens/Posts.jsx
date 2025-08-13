@@ -1,5 +1,5 @@
-// Load user's reports to show which incidents they've already voted onimport React, 
-import { useEffect, useState, useCallback } from 'react';
+// Load user's reports to show which incidents they've already voted onimport React,
+import { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -14,7 +14,11 @@ import {
 } from 'react-native';
 import { useSelector } from 'react-redux';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { getMoreIncidents, getIncidentReportsByReporterId, submitVote } from '../api/incidentApi';
+import {
+  getMoreIncidents,
+  getIncidentReportsByReporterId,
+  submitVote,
+} from '../api/incidentApi';
 import { getCountryNameFromCoords } from '../services/geocoding/geocodingService';
 import { formatRelativeTime } from '../utils/formatRelativeTime';
 
@@ -36,40 +40,43 @@ export default function Posts() {
   const userRole = useSelector(state => state.user.role);
 
   // Function to get location name for a post
-  const getLocationName = useCallback(async (postId, coordinates) => {
-    // Check if we already have the location name cached
-    if (locationNames[postId]) {
-      return locationNames[postId];
-    }
+  const getLocationName = useCallback(
+    async (postId, coordinates) => {
+      // Check if we already have the location name cached
+      if (locationNames[postId]) {
+        return locationNames[postId];
+      }
 
-    try {
-      const locationName = await getCountryNameFromCoords(
-        coordinates[1], // lat
-        coordinates[0]  // lon
-      );
-      
-      // Cache the result
-      setLocationNames(prev => ({
-        ...prev,
-        [postId]: locationName
-      }));
-      
-      return locationName;
-    } catch (error) {
-      console.error('Error getting location name:', error);
-      const fallbackName = 'Unknown Location';
-      setLocationNames(prev => ({
-        ...prev,
-        [postId]: fallbackName
-      }));
-      return fallbackName;
-    }
-  }, [locationNames]);
+      try {
+        const locationName = await getCountryNameFromCoords(
+          coordinates[1], // lat
+          coordinates[0], // lon
+        );
+
+        // Cache the result
+        setLocationNames(prev => ({
+          ...prev,
+          [postId]: locationName,
+        }));
+
+        return locationName;
+      } catch (error) {
+        console.error('Error getting location name:', error);
+        const fallbackName = 'Unknown Location';
+        setLocationNames(prev => ({
+          ...prev,
+          [postId]: fallbackName,
+        }));
+        return fallbackName;
+      }
+    },
+    [locationNames],
+  );
 
   const loadUserReports = useCallback(async () => {
     // Don't load reports for guest users
     if (userRole === undefined || userRole === null || userRole === 1) return;
-    
+
     try {
       const reports = await getIncidentReportsByReporterId(userId);
       // console.log('User reports loaded:', reports);
@@ -115,14 +122,14 @@ export default function Posts() {
         const existingIds = new Set(prev.map(p => p.id));
         const newPosts = merged.filter(p => !existingIds.has(p.id));
         const updatedPosts = [...prev, ...newPosts];
-        
+
         // Trigger location name fetching for new posts
         newPosts.forEach(post => {
           if (post.location?.coordinates) {
             getLocationName(post.id, post.location.coordinates);
           }
         });
-        
+
         return updatedPosts;
       });
 
@@ -155,16 +162,16 @@ export default function Posts() {
   };
 
   // Check if user has already voted on this incident
-  const getUserVoteForIncident = (incidentId) => {
-    const userVote = userReports.find(report => 
-      report.incidentId === incidentId
+  const getUserVoteForIncident = incidentId => {
+    const userVote = userReports.find(
+      report => report.incidentId === incidentId,
     );
     return userVote?.reportType || null;
   };
 
   const handleButtonPress = async (postId, buttonType) => {
     const existingVote = getUserVoteForIncident(postId);
-    
+
     // If user already voted with the same type, don't allow voting again
     if (existingVote === buttonType) {
       return;
@@ -181,41 +188,51 @@ export default function Posts() {
     try {
       // Make an API call to submit the vote
       await submitVote(postId, buttonType === 'real' ? 'confirmed' : 'fake');
-      
+
       // Update local state to reflect the new vote
       const reportType = buttonType === 'real' ? 'confirmed' : 'fake';
-      
+
       // Add to user reports
       setUserReports(prev => {
         // Remove any existing vote for this incident
         const filtered = prev.filter(report => report.incidentId !== postId);
-        return [...filtered, { incidentId: postId, reportType, reporterId: userId }];
+        return [
+          ...filtered,
+          { incidentId: postId, reportType, reporterId: userId },
+        ];
       });
 
       // Update the post counts locally
-      setPosts(prev => prev.map(post => {
-        if (post.id === postId) {
-          const updatedPost = { ...post };
-          
-          // If user had a previous vote, decrement that count
-          if (existingVote === 'confirmed') {
-            updatedPost.confirmationCount = Math.max(0, updatedPost.confirmationCount - 1);
-          } else if (existingVote === 'fake') {
-            updatedPost.fakeReportsCount = Math.max(0, updatedPost.fakeReportsCount - 1);
-          }
-          
-          // Increment the new vote count
-          if (buttonType === 'real') {
-            updatedPost.confirmationCount += 1;
-          } else {
-            updatedPost.fakeReportsCount += 1;
-          }
-          
-          return updatedPost;
-        }
-        return post;
-      }));
+      setPosts(prev =>
+        prev.map(post => {
+          if (post.id === postId) {
+            const updatedPost = { ...post };
 
+            // If user had a previous vote, decrement that count
+            if (existingVote === 'confirmed') {
+              updatedPost.confirmationCount = Math.max(
+                0,
+                updatedPost.confirmationCount - 1,
+              );
+            } else if (existingVote === 'fake') {
+              updatedPost.fakeReportsCount = Math.max(
+                0,
+                updatedPost.fakeReportsCount - 1,
+              );
+            }
+
+            // Increment the new vote count
+            if (buttonType === 'real') {
+              updatedPost.confirmationCount += 1;
+            } else {
+              updatedPost.fakeReportsCount += 1;
+            }
+
+            return updatedPost;
+          }
+          return post;
+        }),
+      );
     } catch (error) {
       console.error('Error submitting vote:', error);
       // Revert the button state on error
@@ -228,7 +245,7 @@ export default function Posts() {
 
   const renderItem = ({ item: post }) => {
     const userVote = getUserVoteForIncident(post.id);
-    
+
     return (
       <View style={styles.card}>
         <View style={styles.headerRow}>
@@ -371,12 +388,25 @@ export default function Posts() {
 
 const ImageSlider = ({ images, onImagePress }) => {
   const [index, setIndex] = useState(0);
+  const scrollViewRef = useRef(null);
 
   if (!images.length) return null;
+
+  const scrollToIndex = newIndex => {
+    if (scrollViewRef.current) {
+      // Get the width of the screen/container to calculate scroll position
+      scrollViewRef.current.scrollTo({
+        x: newIndex * styles.sliderImage.width, // You'll need to define a fixed width
+        animated: true,
+      });
+      setIndex(newIndex);
+    }
+  };
 
   return (
     <View style={styles.imageSliderContainer}>
       <ScrollView
+        ref={scrollViewRef}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
@@ -399,7 +429,7 @@ const ImageSlider = ({ images, onImagePress }) => {
         <TouchableOpacity
           style={[styles.sliderButton, { opacity: index === 0 ? 0.3 : 1 }]}
           onPress={() => {
-            if (index > 0) setIndex(index - 1);
+            if (index > 0) scrollToIndex(index - 1);
           }}
           disabled={index === 0}
         >
@@ -422,7 +452,7 @@ const ImageSlider = ({ images, onImagePress }) => {
             { opacity: index === images.length - 1 ? 0.3 : 1 },
           ]}
           onPress={() => {
-            if (index < images.length - 1) setIndex(index + 1);
+            if (index < images.length - 1) scrollToIndex(index + 1);
           }}
           disabled={index === images.length - 1}
         >
@@ -525,7 +555,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Colors.textColor,
     fontWeight: '400',
-    textAlign: 'justify',
+    // textAlign: 'justify',
     marginBottom: 16,
     lineHeight: 22,
   },
