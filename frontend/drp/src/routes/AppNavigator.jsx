@@ -16,12 +16,27 @@ import TabNavigator from './TabNavigator';
 import { UserDataHelper } from '../services/UserDataHelper';
 import { LocationService } from '../services/LocationService';
 import { getFcmToken } from '../services/fcmService.js';
-import Colors from '../constants/colors.js';
+import { useTheme } from '../hooks/useThem'; // Assuming this is the correct path
 
 export default function AppNavigator() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const dispatch = useDispatch();
+  const { colors, isDarkMode } = useTheme();
+
+  // Create navigation theme using colors from useTheme
+  const navigationTheme = {
+    ...DefaultTheme,
+    colors: {
+      ...DefaultTheme.colors,
+      background: colors.blueGray,
+      card: colors.blueGray,
+      text: colors.textColor,
+      border: colors.darkestBlueGray,
+      notification: colors.orange,
+      primary: colors.orange,
+    },
+  };
 
   useEffect(() => {
     authContext.setIsLoggedIn = setIsLoggedIn;
@@ -214,21 +229,19 @@ export default function AppNavigator() {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#ff6b35" />
+      <View style={{ 
+        flex: 1, 
+        justifyContent: 'center', 
+        alignItems: 'center',
+        backgroundColor: colors.darkerBlueGray
+      }}>
+        <ActivityIndicator size="large" color={colors.orange} />
       </View>
     );
   }
+  
   return (
-    <NavigationContainer
-      theme={{
-        ...DefaultTheme,
-        colors: {
-          ...DefaultTheme.colors,
-          background: Colors.blueGray,
-        },
-      }}
-    >
+    <NavigationContainer theme={navigationTheme}>
       {isLoggedIn ? (
         <MainDrawer setIsLoggedIn={setIsLoggedIn} isLoggedIn={isLoggedIn} />
       ) : (
@@ -278,7 +291,6 @@ export const generateGuestToken = async (loc) => {
         longitude: loc.longitude,
       }));
     }
-
 
     return response.token;
 

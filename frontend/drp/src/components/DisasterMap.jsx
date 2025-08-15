@@ -19,10 +19,195 @@ import UserLocMarker from '../mapComponents/userLocMarker';
 import RouteStartMarker from '../mapComponents/routeStartMarker';
 import RouteEndMarker from '../mapComponents/routeEndMarker';
 import { showSuccessToast } from '../utils/toast';
-import Colors from '../constants/colors';
+// import colors from '../constants/colors';
+import { useTheme } from '../hooks/useThem';
+
 
 const DisasterMap = React.memo(
   ({ shelters, incidents, userLocations, latitude, longitude, setLocation }) => {
+      const { colors, isDarkMode } = useTheme();
+const styles = StyleSheet.create({
+  container: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+  },
+  map: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  markerContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  // Marker text styles
+  markerText: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  // Shadow for all markers
+  markerShadow: {
+    position: 'absolute',
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    borderRadius: 999,
+    top: 2,
+    left: 0,
+    zIndex: -1,
+  },
+  // Callout styles
+  calloutContainer: {
+    minWidth: 150,
+    padding: 10,
+  },
+  calloutTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 5,
+    color: '#333',
+  },
+  calloutText: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 3,
+  },
+  calloutLabel: {
+    fontSize: 12,
+    color: '#4CAF50',
+    fontWeight: 'bold',
+    marginTop: 5,
+  },
+  severityText: {
+    color: '#F44336',
+    fontWeight: 'bold',
+  },
+  typeText: {
+    color: '#2196F3',
+    fontWeight: 'bold',
+  },
+  dangerText: {
+    color: '#FF0000',
+    fontWeight: 'bold',
+  },
+  // Status indicator styles
+  statusContainer: {
+    position: 'absolute',
+    top: 20,
+    left: 20,
+    right: 20,
+    backgroundColor: 'rgba(255, 0, 0, 0.9)',
+    padding: 10,
+    borderRadius: 8,
+    zIndex: 1000,
+  },
+  statusText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  routingContainer: {
+    position: 'absolute',
+    top: 80,
+    left: 20,
+    right: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    padding: 10,
+    borderRadius: 8,
+    zIndex: 1000,
+  },
+  routingText: {
+    color: '#ffffff',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  recalculateContainer: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    padding: 10,
+    borderRadius: 8,
+    zIndex: 1000,
+  },
+  recalculateText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  alertOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  alertContainer: {
+    backgroundColor: colors.blueGray,
+    padding: 25,
+    borderRadius: 16,
+    margin: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 12,
+    minWidth: 280,
+  },
+  alertTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: colors.textColor,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  alertMessage: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  cancelButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    fontSize: 14,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    overflow: 'hidden',
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: colors.textSecondary,
+  },
+  cancelButtonText: {
+    color: colors.textSecondary,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  primaryButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    overflow: 'hidden',
+    backgroundColor: colors.orange,
+  },
+  primaryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+});
     const [zoomLevel, setZoomLevel] = useState(15);
     const [markerSize, setMarkerSize] = useState(24); // Default marker size 
 
@@ -749,187 +934,6 @@ const DisasterMap = React.memo(
   },
 );
 
-const styles = StyleSheet.create({
-  container: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-  },
-  map: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  markerContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  // Marker text styles
-  markerText: {
-    color: '#ffffff',
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  // Shadow for all markers
-  markerShadow: {
-    position: 'absolute',
-    backgroundColor: 'rgba(0,0,0,0.1)',
-    borderRadius: 999,
-    top: 2,
-    left: 0,
-    zIndex: -1,
-  },
-  // Callout styles
-  calloutContainer: {
-    minWidth: 150,
-    padding: 10,
-  },
-  calloutTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 5,
-    color: '#333',
-  },
-  calloutText: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 3,
-  },
-  calloutLabel: {
-    fontSize: 12,
-    color: '#4CAF50',
-    fontWeight: 'bold',
-    marginTop: 5,
-  },
-  severityText: {
-    color: '#F44336',
-    fontWeight: 'bold',
-  },
-  typeText: {
-    color: '#2196F3',
-    fontWeight: 'bold',
-  },
-  dangerText: {
-    color: '#FF0000',
-    fontWeight: 'bold',
-  },
-  // Status indicator styles
-  statusContainer: {
-    position: 'absolute',
-    top: 20,
-    left: 20,
-    right: 20,
-    backgroundColor: 'rgba(255, 0, 0, 0.9)',
-    padding: 10,
-    borderRadius: 8,
-    zIndex: 1000,
-  },
-  statusText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  routingContainer: {
-    position: 'absolute',
-    top: 80,
-    left: 20,
-    right: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    padding: 10,
-    borderRadius: 8,
-    zIndex: 1000,
-  },
-  routingText: {
-    color: '#ffffff',
-    fontSize: 14,
-    textAlign: 'center',
-  },
-  recalculateContainer: {
-    position: 'absolute',
-    bottom: 20,
-    right: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    padding: 10,
-    borderRadius: 8,
-    zIndex: 1000,
-  },
-  recalculateText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  alertOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  alertContainer: {
-    backgroundColor: Colors.blueGray,
-    padding: 25,
-    borderRadius: 16,
-    margin: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 8,
-    },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 12,
-    minWidth: 280,
-  },
-  alertTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: Colors.textColor,
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  alertMessage: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 24,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  cancelButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    fontSize: 14,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    overflow: 'hidden',
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: Colors.textSecondary,
-  },
-  cancelButtonText: {
-    color: Colors.textSecondary,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  primaryButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    overflow: 'hidden',
-    backgroundColor: Colors.orange,
-  },
-  primaryButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});
+
 
 export default DisasterMap;

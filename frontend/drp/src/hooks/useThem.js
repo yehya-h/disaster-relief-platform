@@ -1,5 +1,4 @@
-
-import { store } from '../redux/store'; // Adjust path as needed
+import { useSelector } from 'react-redux';
 
 const colorPalettes = {
   dark: {
@@ -24,18 +23,12 @@ const colorPalettes = {
   }
 };
 
-// Function to get current colors based on theme
-const getColors = () => {
-  const state = store.getState();
-  const isDarkMode = state.theme.isDarkMode;
-  return colorPalettes[isDarkMode ? 'dark' : 'light'];
+export const useTheme = () => {
+  const isDarkMode = useSelector(state => state.theme.isDarkMode);
+  const colors = colorPalettes[isDarkMode ? 'dark' : 'light'];
+  
+  return {
+    colors,
+    isDarkMode,
+  };
 };
-
-// Create a Proxy to make it behave like the old Colors object
-const Colors = new Proxy({}, {
-  get: function(target, prop) {
-    return getColors()[prop];
-  }
-});
-
-export default Colors;

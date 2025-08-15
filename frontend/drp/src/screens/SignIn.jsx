@@ -13,11 +13,186 @@ import React, { useState } from 'react';
 import { sendEmailVerification, signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../utils/firebase';
 import { UserDataHelper } from '../services/UserDataHelper';
-import Colors from '../constants/colors';
+// import colors from '../constants/colors';
+import { useTheme } from '../hooks/useThem';
+
 import Icon from 'react-native-vector-icons/Ionicons';
 import api from '../api/Interceptor';
 
 export default function SignIn({ navigation, route, ...others }) {
+  const { colors, isDarkMode } = useTheme(); 
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.darkestBlueGray,
+    padding: 20
+  },
+  header: {
+    paddingTop: 50,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.blueGray,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  formContainer: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingTop: 150,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: colors.textColor,
+    marginBottom: 40,
+    lineHeight: 40,
+    textAlign: 'center',
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.blueGray,
+    borderRadius: 12,
+    marginBottom: 16,
+    paddingHorizontal: 16,
+    height: 56,
+    borderWidth: 1,
+    borderColor: colors.orange,
+  },
+  inputIcon: {
+    marginRight: 12,
+  },
+  input: {
+    flex: 1,
+    color: colors.textColor,
+    fontSize: 16,
+  },
+  eyeIcon: {
+    padding: 4,
+  },
+  error: {
+    color: colors.danger,
+    fontSize: 14,
+    marginBottom: 10,
+    marginTop: -8,
+    marginLeft: 4,
+  },
+  submitButton: {
+    backgroundColor: colors.orange,
+    borderRadius: 12,
+    height: 56,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+    shadowColor: colors.orange,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  submitButtonDisabled: {
+    backgroundColor: colors.textSecondary,
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  submitButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  forgotPassword: {
+    alignItems: 'center',
+    marginTop: 24,
+  },
+  forgotPasswordText: {
+    color: colors.orange,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  resendButton: {
+    backgroundColor: '#28a745',
+    padding: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  resendButtonDisabled: {
+    backgroundColor: colors.textSecondary,
+    opacity: 0.7,
+  },
+  resendButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  signupLink: {
+    alignItems: 'center',
+    marginTop: 'auto',
+    marginBottom: 40,
+  },
+  signupText: {
+    color: colors.textSecondary,
+    fontSize: 14,
+  },
+  infoText: {
+    color: colors.orange,
+    marginBottom: 24,
+    textAlign: 'center',
+    fontSize: 14,
+    fontStyle: 'italic',
+  },
+  alertOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  alertContainer: {
+    backgroundColor: colors.blueGray,
+    borderRadius: 12,
+    padding: 24,
+    width: '90%',
+    maxWidth: 300,
+    // borderWidth: 1,
+    // borderColor: colors.orange,
+  },
+  alertTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.textColor,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  alertMessage: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  alertButton: {
+    backgroundColor: colors.orange,
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    alignSelf: 'center',
+  },
+  alertButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+});
+
   const dispatch = useDispatch();
   const deviceId = useSelector((state) => state.user.deviceId);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -242,11 +417,11 @@ export default function SignIn({ navigation, route, ...others }) {
           )}
 
           <View style={styles.inputContainer}>
-            <Icon name="mail-outline" size={20} color={Colors.textSecondary} style={styles.inputIcon} />
+            <Icon name="mail-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
             <TextInput
               style={styles.input}
               placeholder="Email"
-              placeholderTextColor={Colors.textSecondary}
+              placeholderTextColor={colors.textSecondary}
               autoCapitalize="none"
               keyboardType="email-address"
               value={values.email}
@@ -258,11 +433,11 @@ export default function SignIn({ navigation, route, ...others }) {
           {touched.email && errors.email && <Text style={styles.error}>{errors.email}</Text>}
 
           <View style={styles.inputContainer}>
-            <Icon name="lock-closed-outline" size={20} color={Colors.textSecondary} style={styles.inputIcon} />
+            <Icon name="lock-closed-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
             <TextInput
               style={styles.input}
               placeholder="Password"
-              placeholderTextColor={Colors.textSecondary}
+              placeholderTextColor={colors.textSecondary}
               secureTextEntry={!showPassword}
               value={values.password}
               onChangeText={handleChange('password')}
@@ -276,7 +451,7 @@ export default function SignIn({ navigation, route, ...others }) {
               <Icon
                 name={showPassword ? "eye-outline" : "eye-off-outline"}
                 size={20}
-                color={Colors.orange}
+                color={colors.orange}
               />
             </TouchableOpacity>
           </View>
@@ -339,174 +514,3 @@ export default function SignIn({ navigation, route, ...others }) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.darkestBlueGray,
-    padding: 20
-  },
-  header: {
-    paddingTop: 50,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.blueGray,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  formContainer: {
-    flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 150,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: Colors.textColor,
-    marginBottom: 40,
-    lineHeight: 40,
-    textAlign: 'center',
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.blueGray,
-    borderRadius: 12,
-    marginBottom: 16,
-    paddingHorizontal: 16,
-    height: 56,
-    borderWidth: 1,
-    borderColor: Colors.orange,
-  },
-  inputIcon: {
-    marginRight: 12,
-  },
-  input: {
-    flex: 1,
-    color: Colors.textColor,
-    fontSize: 16,
-  },
-  eyeIcon: {
-    padding: 4,
-  },
-  error: {
-    color: Colors.danger,
-    fontSize: 14,
-    marginBottom: 10,
-    marginTop: -8,
-    marginLeft: 4,
-  },
-  submitButton: {
-    backgroundColor: Colors.orange,
-    borderRadius: 12,
-    height: 56,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 20,
-    shadowColor: Colors.orange,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  submitButtonDisabled: {
-    backgroundColor: Colors.textSecondary,
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-  submitButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  forgotPassword: {
-    alignItems: 'center',
-    marginTop: 24,
-  },
-  forgotPasswordText: {
-    color: Colors.orange,
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  resendButton: {
-    backgroundColor: '#28a745',
-    padding: 12,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  resendButtonDisabled: {
-    backgroundColor: Colors.textSecondary,
-    opacity: 0.7,
-  },
-  resendButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  signupLink: {
-    alignItems: 'center',
-    marginTop: 'auto',
-    marginBottom: 40,
-  },
-  signupText: {
-    color: Colors.textSecondary,
-    fontSize: 14,
-  },
-  infoText: {
-    color: Colors.orange,
-    marginBottom: 24,
-    textAlign: 'center',
-    fontSize: 14,
-    fontStyle: 'italic',
-  },
-  alertOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  alertContainer: {
-    backgroundColor: Colors.blueGray,
-    borderRadius: 12,
-    padding: 24,
-    width: '90%',
-    maxWidth: 300,
-    // borderWidth: 1,
-    // borderColor: Colors.orange,
-  },
-  alertTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: Colors.textColor,
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  alertMessage: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 24,
-  },
-  alertButton: {
-    backgroundColor: Colors.orange,
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    alignSelf: 'center',
-  },
-  alertButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});

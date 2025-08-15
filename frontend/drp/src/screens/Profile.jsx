@@ -5,7 +5,9 @@ import { Formik } from 'formik';
 import * as yup from 'yup';
 import { updateUserInfo } from '../api/UserApi';
 import { updateUserDetails } from '../redux/UserSlice';
-import Colors from '../constants/colors';
+// import colors from '../constants/colors';
+import { useTheme } from '../hooks/useThem';
+
 import Icon from 'react-native-vector-icons/Ionicons';
 
 const updateProfileSchema = yup.object({
@@ -14,6 +16,231 @@ const updateProfileSchema = yup.object({
 });
 
 export default function Profile({ navigation }) {
+  const { colors, isDarkMode } = useTheme(); 
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.darkestBlueGray,
+  },
+  header: {
+    paddingTop: 50,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.blueGray,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.textColor,
+    textAlign: 'center',
+  },
+  placeholder: {
+    width: 40,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  section: {
+    marginBottom: 32,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.textColor,
+    marginBottom: 16,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.blueGray,
+    borderRadius: 12,
+    marginBottom: 16,
+    paddingHorizontal: 16,
+    height: 56,
+    borderWidth: 1,
+    borderColor: colors.orange,
+  },
+  disabledInput: {
+    opacity: 0.6,
+    borderColor: colors.textSecondary,
+  },
+  inputIcon: {
+    marginRight: 12,
+  },
+  input: {
+    flex: 1,
+    color: colors.textColor,
+    fontSize: 16,
+  },
+  disabledInputText: {
+    flex: 1,
+    color: colors.textSecondary,
+    fontSize: 16,
+  },
+  error: {
+    color: colors.danger,
+    fontSize: 14,
+    marginBottom: 10,
+    marginTop: -8,
+    marginLeft: 4,
+  },
+  helperText: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    marginTop: -8,
+    marginBottom: 16,
+    marginLeft: 4,
+  },
+  updateButton: {
+    backgroundColor: colors.orange,
+    borderRadius: 12,
+    height: 56,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 8,
+    shadowColor: colors.orange,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  updateButtonDisabled: {
+    backgroundColor: colors.textSecondary,
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  updateButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    marginRight: 8,
+  },
+  buttonIcon: {
+    marginLeft: 4,
+  },
+  actionCard: {
+    backgroundColor: colors.blueGray,
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.orange,
+    marginBottom: 12,
+  },
+  actionCardLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  actionCardText: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  actionCardTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.textColor,
+    marginBottom: 2,
+  },
+  actionCardSubtitle: {
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  locationsPreview: {
+    marginBottom: 16,
+  },
+  locationPreviewCard: {
+    backgroundColor: colors.blueGray,
+    borderRadius: 8,
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: colors.textSecondary,
+  },
+  locationPreviewInfo: {
+    marginLeft: 8,
+    flex: 1,
+  },
+  locationPreviewName: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.textColor,
+    marginBottom: 2,
+  },
+  locationPreviewAddress: {
+    fontSize: 12,
+    color: colors.textSecondary,
+  },
+  emptyLocations: {
+    alignItems: 'center',
+    paddingVertical: 32,
+  },
+  emptyLocationsText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginTop: 8,
+  },
+  // Custom Alert Styles
+  alertOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  alertContainer: {
+    backgroundColor: colors.blueGray,
+    borderRadius: 12,
+    padding: 24,
+    width: '90%',
+    maxWidth: 300,
+    // borderWidth: 1,
+    // borderColor: colors.orange,
+  },
+  alertTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.textColor,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  alertMessage: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  alertButton: {
+    backgroundColor: colors.orange,
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    alignSelf: 'center',
+  },
+  alertButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+});
   const dispatch = useDispatch();
   const user = useSelector((state) => state.user);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -87,11 +314,11 @@ export default function Profile({ navigation }) {
 
                 {/* First Name Input */}
                 <View style={styles.inputContainer}>
-                  <Icon name="person-outline" size={20} color={Colors.textSecondary} style={styles.inputIcon} />
+                  <Icon name="person-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
                     placeholder="First Name"
-                    placeholderTextColor={Colors.textSecondary}
+                    placeholderTextColor={colors.textSecondary}
                     autoCapitalize="words"
                     value={values.fname}
                     onChangeText={handleChange('fname')}
@@ -103,11 +330,11 @@ export default function Profile({ navigation }) {
 
                 {/* Last Name Input */}
                 <View style={styles.inputContainer}>
-                  <Icon name="person-outline" size={20} color={Colors.textSecondary} style={styles.inputIcon} />
+                  <Icon name="person-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
                     placeholder="Last Name"
-                    placeholderTextColor={Colors.textSecondary}
+                    placeholderTextColor={colors.textSecondary}
                     autoCapitalize="words"
                     value={values.lname}
                     onChangeText={handleChange('lname')}
@@ -119,7 +346,7 @@ export default function Profile({ navigation }) {
 
                 {/* Email Display (Read-only) */}
                 <View style={[styles.inputContainer, styles.disabledInput]}>
-                  <Icon name="mail-outline" size={20} color={Colors.textSecondary} style={styles.inputIcon} />
+                  <Icon name="mail-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
                   <Text style={styles.disabledInputText}>{user.email}</Text>
                 </View>
                 <Text style={styles.helperText}>Email cannot be changed</Text>
@@ -144,13 +371,13 @@ export default function Profile({ navigation }) {
                 <Text style={styles.sectionTitle}>Security</Text>
                 <TouchableOpacity style={styles.actionCard} onPress={goToUpdatePassword}>
                   <View style={styles.actionCardLeft}>
-                    <Icon name="lock-closed-outline" size={24} color={Colors.orange} />
+                    <Icon name="lock-closed-outline" size={24} color={colors.orange} />
                     <View style={styles.actionCardText}>
                       <Text style={styles.actionCardTitle}>Update Password</Text>
                       <Text style={styles.actionCardSubtitle}>Change your account password</Text>
                     </View>
                   </View>
-                  <Icon name="chevron-forward" size={20} color={Colors.textSecondary} />
+                  <Icon name="chevron-forward" size={20} color={colors.textSecondary} />
                 </TouchableOpacity>
               </View>
 
@@ -163,7 +390,7 @@ export default function Profile({ navigation }) {
                   {user.locations && user.locations.length > 0 ? (
                     user.locations.map((location, index) => (
                       <View key={index} style={styles.locationPreviewCard}>
-                        <Icon name="location" size={16} color={Colors.orange} />
+                        <Icon name="location" size={16} color={colors.orange} />
                         <View style={styles.locationPreviewInfo}>
                           <Text style={styles.locationPreviewName}>{location.location?.name || 'Unnamed Location'}</Text>
                           <Text style={styles.locationPreviewAddress} numberOfLines={1}>
@@ -177,7 +404,7 @@ export default function Profile({ navigation }) {
                     ))
                   ) : (
                     <View style={styles.emptyLocations}>
-                      <Icon name="location-outline" size={32} color={Colors.textSecondary} />
+                      <Icon name="location-outline" size={32} color={colors.textSecondary} />
                       <Text style={styles.emptyLocationsText}>No locations added</Text>
                     </View>
                   )}
@@ -186,13 +413,13 @@ export default function Profile({ navigation }) {
                 {/* Update Locations Button */}
                 <TouchableOpacity style={styles.actionCard} onPress={goToUpdateLocations}>
                   <View style={styles.actionCardLeft}>
-                    <Icon name="map-outline" size={24} color={Colors.orange} />
+                    <Icon name="map-outline" size={24} color={colors.orange} />
                     <View style={styles.actionCardText}>
                       <Text style={styles.actionCardTitle}>Manage Locations</Text>
                       <Text style={styles.actionCardSubtitle}>Add, edit, or remove your locations</Text>
                     </View>
                   </View>
-                  <Icon name="chevron-forward" size={20} color={Colors.textSecondary} />
+                  <Icon name="chevron-forward" size={20} color={colors.textSecondary} />
                 </TouchableOpacity>
               </View>
             </>
@@ -219,227 +446,3 @@ export default function Profile({ navigation }) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.darkestBlueGray,
-  },
-  header: {
-    paddingTop: 50,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.blueGray,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: Colors.textColor,
-    textAlign: 'center',
-  },
-  placeholder: {
-    width: 40,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-  section: {
-    marginBottom: 32,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: Colors.textColor,
-    marginBottom: 16,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.blueGray,
-    borderRadius: 12,
-    marginBottom: 16,
-    paddingHorizontal: 16,
-    height: 56,
-    borderWidth: 1,
-    borderColor: Colors.orange,
-  },
-  disabledInput: {
-    opacity: 0.6,
-    borderColor: Colors.textSecondary,
-  },
-  inputIcon: {
-    marginRight: 12,
-  },
-  input: {
-    flex: 1,
-    color: Colors.textColor,
-    fontSize: 16,
-  },
-  disabledInputText: {
-    flex: 1,
-    color: Colors.textSecondary,
-    fontSize: 16,
-  },
-  error: {
-    color: Colors.danger,
-    fontSize: 14,
-    marginBottom: 10,
-    marginTop: -8,
-    marginLeft: 4,
-  },
-  helperText: {
-    color: Colors.textSecondary,
-    fontSize: 12,
-    marginTop: -8,
-    marginBottom: 16,
-    marginLeft: 4,
-  },
-  updateButton: {
-    backgroundColor: Colors.orange,
-    borderRadius: 12,
-    height: 56,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 8,
-    shadowColor: Colors.orange,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  updateButtonDisabled: {
-    backgroundColor: Colors.textSecondary,
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-  updateButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-    marginRight: 8,
-  },
-  buttonIcon: {
-    marginLeft: 4,
-  },
-  actionCard: {
-    backgroundColor: Colors.blueGray,
-    borderRadius: 12,
-    padding: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.orange,
-    marginBottom: 12,
-  },
-  actionCardLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  actionCardText: {
-    marginLeft: 12,
-    flex: 1,
-  },
-  actionCardTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: Colors.textColor,
-    marginBottom: 2,
-  },
-  actionCardSubtitle: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-  },
-  locationsPreview: {
-    marginBottom: 16,
-  },
-  locationPreviewCard: {
-    backgroundColor: Colors.blueGray,
-    borderRadius: 8,
-    padding: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: Colors.textSecondary,
-  },
-  locationPreviewInfo: {
-    marginLeft: 8,
-    flex: 1,
-  },
-  locationPreviewName: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: Colors.textColor,
-    marginBottom: 2,
-  },
-  locationPreviewAddress: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-  },
-  emptyLocations: {
-    alignItems: 'center',
-    paddingVertical: 32,
-  },
-  emptyLocationsText: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    marginTop: 8,
-  },
-  // Custom Alert Styles
-  alertOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  alertContainer: {
-    backgroundColor: Colors.blueGray,
-    borderRadius: 12,
-    padding: 24,
-    width: '90%',
-    maxWidth: 300,
-    // borderWidth: 1,
-    // borderColor: Colors.orange,
-  },
-  alertTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: Colors.textColor,
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  alertMessage: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 24,
-  },
-  alertButton: {
-    backgroundColor: Colors.orange,
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    alignSelf: 'center',
-  },
-  alertButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});

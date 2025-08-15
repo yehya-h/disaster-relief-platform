@@ -5,10 +5,172 @@ import { Formik } from 'formik';
 import { useSelector, useDispatch } from 'react-redux';
 import { setUserData, clearSignupData } from '../redux/signupLocationsSlice';
 import { getCurrentLocation } from '../services/location/locationService';
-import Colors from '../constants/colors';
+// import colors from '../constants/colors';
+import { useTheme } from '../hooks/useThem';
 import Icon from 'react-native-vector-icons/Ionicons';
 
 export default function SignUpScreen({ navigation, ...others }) {
+  const { colors, isDarkMode } = useTheme(); 
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.darkestBlueGray,
+  },
+  header: {
+    paddingTop: 50,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.blueGray,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  formContainer: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingTop: 100,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: colors.textColor,
+    marginBottom: 40,
+    lineHeight: 40,
+    textAlign: 'center'
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.blueGray,
+    borderRadius: 12,
+    marginBottom: 16,
+    paddingHorizontal: 16,
+    height: 56,
+    borderWidth: 1,
+    borderColor: colors.orange,
+  },
+  inputIcon: {
+    marginRight: 12,
+  },
+  input: {
+    flex: 1,
+    color: colors.textColor,
+    fontSize: 16,
+  },
+  eyeIcon: {
+    padding: 4,
+  },
+  error: {
+    color: colors.danger,
+    fontSize: 14,
+    marginBottom: 10,
+    marginTop: -8,
+    marginLeft: 4,
+  },
+  continueButton: {
+    backgroundColor: colors.orange,
+    borderRadius: 12,
+    height: 56,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 30,
+    shadowColor: colors.orange,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  continueButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    marginRight: 8,
+  },
+  buttonIcon: {
+    marginLeft: 4,
+  },
+  loginLink: {
+    alignItems: 'center',
+    marginTop: 'auto',
+    marginBottom: 40,
+    paddingTop: 10
+  },
+  loginText: {
+    color: colors.textSecondary,
+    fontSize: 14,
+  },
+  savedLocationsIndicator: {
+    backgroundColor: colors.blueGray,
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 20,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.orange,
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  savedLocationsText: {
+    color: colors.orange,
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  // Custom Alert Styles
+  alertOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  alertContainer: {
+    backgroundColor: colors.blueGray,
+    borderRadius: 12,
+    padding: 24,
+    width: '90%',
+    maxWidth: 300,
+    // borderWidth: 1,
+    // borderColor: colors.orange,
+  },
+  alertTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.textColor,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  alertMessage: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  alertButton: {
+    backgroundColor: colors.orange,
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    alignSelf: 'center',
+  },
+  alertButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+});
+
   const deviceId = useSelector((state) => state.user.deviceId);
   const { locations } = useSelector((state) => state.signupLocations);
   const dispatch = useDispatch();
@@ -96,11 +258,11 @@ export default function SignUpScreen({ navigation, ...others }) {
           <Text style={styles.title}>Create Account</Text>
           <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
             <View style={styles.inputContainer}>
-              <Icon name="person-outline" size={20} color={Colors.textSecondary} style={styles.inputIcon} />
+              <Icon name="person-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="First name"
-                placeholderTextColor={Colors.textSecondary}
+                placeholderTextColor={colors.textSecondary}
                 autoCapitalize="words"
                 value={values.fname}
                 onChangeText={handleChange('fname')}
@@ -111,11 +273,11 @@ export default function SignUpScreen({ navigation, ...others }) {
             {touched.fname && errors.fname && <Text style={styles.error}>{errors.fname}</Text>}
 
             <View style={styles.inputContainer}>
-              <Icon name="person-outline" size={20} color={Colors.textSecondary} style={styles.inputIcon} />
+              <Icon name="person-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="Last Name"
-                placeholderTextColor={Colors.textSecondary}
+                placeholderTextColor={colors.textSecondary}
                 autoCapitalize="words"
                 value={values.lname}
                 onChangeText={handleChange('lname')}
@@ -126,11 +288,11 @@ export default function SignUpScreen({ navigation, ...others }) {
             {touched.lname && errors.lname && <Text style={styles.error}>{errors.lname}</Text>}
 
             <View style={styles.inputContainer}>
-              <Icon name="mail-outline" size={20} color={Colors.textSecondary} style={styles.inputIcon} />
+              <Icon name="mail-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="Email"
-                placeholderTextColor={Colors.textSecondary}
+                placeholderTextColor={colors.textSecondary}
                 autoCapitalize="none"
                 keyboardType="email-address"
                 value={values.email}
@@ -142,11 +304,11 @@ export default function SignUpScreen({ navigation, ...others }) {
             {touched.email && errors.email && <Text style={styles.error}>{errors.email}</Text>}
 
             <View style={styles.inputContainer}>
-              <Icon name="lock-closed-outline" size={20} color={Colors.textSecondary} style={styles.inputIcon} />
+              <Icon name="lock-closed-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="Password"
-                placeholderTextColor={Colors.textSecondary}
+                placeholderTextColor={colors.textSecondary}
                 secureTextEntry={!showPassword}
                 value={values.password}
                 onChangeText={handleChange('password')}
@@ -160,18 +322,18 @@ export default function SignUpScreen({ navigation, ...others }) {
                 <Icon
                   name={showPassword ? "eye-outline" : "eye-off-outline"}
                   size={20}
-                  color={Colors.orange}
+                  color={colors.orange}
                 />
               </TouchableOpacity>
             </View>
             {touched.password && errors.password && <Text style={styles.error}>{errors.password}</Text>}
 
             <View style={styles.inputContainer}>
-              <Icon name="lock-closed-outline" size={20} color={Colors.textSecondary} style={styles.inputIcon} />
+              <Icon name="lock-closed-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="Confirm Password"
-                placeholderTextColor={Colors.textSecondary}
+                placeholderTextColor={colors.textSecondary}
                 secureTextEntry={!showConfirmPassword}
                 value={values.cPassword}
                 onChangeText={handleChange('cPassword')}
@@ -185,7 +347,7 @@ export default function SignUpScreen({ navigation, ...others }) {
                 <Icon
                   name={showConfirmPassword ? "eye-outline" : "eye-off-outline"}
                   size={20}
-                  color={Colors.orange}
+                  color={colors.orange}
                 />
               </TouchableOpacity>
             </View>
@@ -221,162 +383,3 @@ export default function SignUpScreen({ navigation, ...others }) {
     </Formik>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.darkestBlueGray,
-  },
-  header: {
-    paddingTop: 50,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.blueGray,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  formContainer: {
-    flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 20,
-    paddingTop: 100,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: Colors.textColor,
-    marginBottom: 40,
-    lineHeight: 40,
-    textAlign: 'center'
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.blueGray,
-    borderRadius: 12,
-    marginBottom: 16,
-    paddingHorizontal: 16,
-    height: 56,
-    borderWidth: 1,
-    borderColor: Colors.orange,
-  },
-  inputIcon: {
-    marginRight: 12,
-  },
-  input: {
-    flex: 1,
-    color: Colors.textColor,
-    fontSize: 16,
-  },
-  eyeIcon: {
-    padding: 4,
-  },
-  error: {
-    color: Colors.danger,
-    fontSize: 14,
-    marginBottom: 10,
-    marginTop: -8,
-    marginLeft: 4,
-  },
-  continueButton: {
-    backgroundColor: Colors.orange,
-    borderRadius: 12,
-    height: 56,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 30,
-    shadowColor: Colors.orange,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  continueButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-    marginRight: 8,
-  },
-  buttonIcon: {
-    marginLeft: 4,
-  },
-  loginLink: {
-    alignItems: 'center',
-    marginTop: 'auto',
-    marginBottom: 40,
-    paddingTop: 10
-  },
-  loginText: {
-    color: Colors.textSecondary,
-    fontSize: 14,
-  },
-  savedLocationsIndicator: {
-    backgroundColor: Colors.blueGray,
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 20,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.orange,
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  savedLocationsText: {
-    color: Colors.orange,
-    fontSize: 14,
-    fontWeight: '600',
-    marginLeft: 8,
-  },
-  // Custom Alert Styles
-  alertOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  alertContainer: {
-    backgroundColor: Colors.blueGray,
-    borderRadius: 12,
-    padding: 24,
-    width: '90%',
-    maxWidth: 300,
-    // borderWidth: 1,
-    // borderColor: Colors.orange,
-  },
-  alertTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: Colors.textColor,
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  alertMessage: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 24,
-  },
-  alertButton: {
-    backgroundColor: Colors.orange,
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    alignSelf: 'center',
-  },
-  alertButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});

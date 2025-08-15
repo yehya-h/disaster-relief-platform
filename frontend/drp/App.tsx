@@ -7,7 +7,7 @@
 import 'react-native-reanimated';
 import 'react-native-gesture-handler';
 import React, { useEffect } from 'react';
-import { PermissionsAndroid, Platform } from 'react-native';
+import { PermissionsAndroid, Platform, Alert, View, StyleSheet } from 'react-native';
 import AppNavigator from './src/routes/AppNavigator';
 import store from './src/redux/store';
 import { Provider } from 'react-redux';
@@ -16,11 +16,11 @@ import {
   getFcmToken,
 } from './src/services/fcmService';
 import messaging from '@react-native-firebase/messaging';
-import { Alert } from 'react-native';
-import { View, StyleSheet } from 'react-native';
-import Colors from './src/constants/colors';
 
-function App() {
+import { useTheme } from './src/hooks/useThem'
+function AppContent() {
+  const { colors } = useTheme();
+
   useEffect(() => {
     async function setupNotifications() {
       const granted = await requestNotificationPermission();
@@ -51,10 +51,16 @@ function App() {
   }, []);
 
   return (
+    <View style={[styles.container, { backgroundColor: colors.blueGray }]}>
+      <AppNavigator />
+    </View>
+  );
+}
+
+export default function App() {
+  return (
     <Provider store={store}>
-      <View style={styles.container}>
-        <AppNavigator />
-      </View>
+      <AppContent />
     </Provider>
   );
 }
@@ -62,8 +68,5 @@ function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.blueGray,
   },
 });
-
-export default App;

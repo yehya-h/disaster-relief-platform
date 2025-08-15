@@ -6,6 +6,8 @@ import {
   StyleSheet,
 } from 'react-native';
 import Colors from '../constants/colors';
+import { useTheme } from '../hooks/useThem';
+
 
 const CustomLoader = ({ 
   visible = false, 
@@ -13,22 +15,7 @@ const CustomLoader = ({
   size = 'large',
   color = Colors.orange 
 }) => {
-  if (!visible) return null;
-
-  return (
-    <View style={styles.container}>
-      <View style={styles.loaderCard}>
-        <ActivityIndicator 
-          size={size} 
-          color={color} 
-          style={styles.spinner}
-        />
-        <Text style={styles.loadingText}>{text}</Text>
-      </View>
-    </View>
-  );
-};
-
+    const { colors, isDarkMode } = useTheme();
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
@@ -51,11 +38,28 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 16,
-    color: Colors.textColor,
+    color: colors.textColor,
     fontWeight: '600',
     textAlign: 'center',
     letterSpacing: 0.5,
   },
 });
+  if (!visible) return null;
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.loaderCard}>
+        <ActivityIndicator 
+          size={size} 
+          color={color} 
+          style={styles.spinner}
+        />
+        <Text style={styles.loadingText}>{text}</Text>
+      </View>
+    </View>
+  );
+};
+
+
 
 export default CustomLoader;

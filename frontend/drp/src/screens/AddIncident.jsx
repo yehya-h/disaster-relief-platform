@@ -26,7 +26,9 @@ import CustomAlert from '../components/CustomAlert';
 import CustomLoader from '../components/CustomLoader'; // Import the new CustomLoader
 import CustomProgressBar from '../components/CustomProgressBar'; // Import the new CustomProgressBar
 import ImageResizer from 'react-native-image-resizer';
-import Colors from '../constants/colors';
+// import colors from '../constants/colors';
+import { useTheme } from '../hooks/useThem';
+
 import CustomPicker from '../components/CustomPicker';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -35,6 +37,183 @@ import { fetchLatestIncidents } from '../redux/incidentSlice';
 const severityLevels = ['Low', 'Medium', 'High'];
 
 export default function AddIncident({ navigation }) {
+  const { colors, isDarkMode } = useTheme(); 
+
+const styles = StyleSheet.create({
+  scrollContainer: {
+    flexGrow: 1,
+    backgroundColor: colors.blueGray,
+  },
+  container: {
+    flex: 1,
+    padding: 20,
+  },
+
+  // Photo Section Styles
+  photoSection: {
+    marginBottom: 30,
+  },
+  photoSquare: {
+    width: '100%',
+    height: 280, // Increased from 220 to 280
+    backgroundColor: colors.orange,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cameraIcon: {
+    marginBottom: 12, // Increased from 8 to 12
+  },
+  photoText: {
+    color: colors.textColor,
+    fontSize: 16, // Increased from 14 to 16
+    fontWeight: '600',
+    textAlign: 'center',
+    paddingHorizontal: 20,
+    lineHeight: 20, // Increased from 18 to 20
+  },
+  photoSquareWithImage: {
+    width: '100%',
+    height: 280, // Increased from 220 to 280
+    borderRadius: 12,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  photoImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  changePhotoOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingVertical: 12, // Increased from 8 to 12
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  changePhotoText: {
+    color: colors.textColor,
+    fontSize: 14, // Increased from 12 to 14
+    fontWeight: '600',
+    marginTop: 4, // Increased from 2 to 4
+  },
+  // Form Section Styles - Updated to match SignUp
+  formSection: {
+    backgroundColor: colors.darkerBlueGray,
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  inputGroup: {
+    marginBottom: 24,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.textColor,
+    marginBottom: 8,
+  },
+
+  // Severity Section Styles - Updated to match SignUp input style
+  severityContainer: {
+    gap: 12,
+  },
+  severityButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12, // Changed from 8 to 12 to match SignUp
+    borderWidth: 1,
+    borderColor: colors.orange, // Changed to match SignUp border color
+    backgroundColor: colors.blueGray, // Changed to match SignUp background
+    height: 56, // Added height to match SignUp inputs
+  },
+  severityButtonSelected: {
+    borderColor: colors.orange,
+    backgroundColor: colors.blueGray, // Keep consistent with unselected
+  },
+  radioCircle: {
+    height: 20,
+    width: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: colors.textSecondary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  selectedDot: {
+    height: 10,
+    width: 10,
+    borderRadius: 5,
+    backgroundColor: colors.orange,
+  },
+  severityText: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    fontWeight: '500',
+  },
+  severityTextSelected: {
+    color: colors.orange,
+    fontWeight: '600',
+  },
+  textArea: {
+    borderWidth: 1, // Changed from 1.5 to 1 to match SignUp
+    borderColor: colors.orange, // Changed to match SignUp border color
+    borderRadius: 12, // Changed from 8 to 12 to match SignUp
+    padding: 16, // Changed from 12 to 16 to match SignUp padding
+    height: 100,
+    textAlignVertical: 'top',
+    backgroundColor: colors.blueGray, // Changed to match SignUp background
+    fontSize: 16,
+    color: colors.textColor,
+  },
+
+  // Submit Section Styles
+  submitSection: {
+    marginTop: 10,
+  },
+  analyzeButton: {
+    backgroundColor: colors.orange,
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  analyzeButtonText: {
+    color: colors.textColor,
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+
+  // Error Styles
+  error: {
+    color: colors.orange,
+    fontSize: 14,
+    marginTop: 6,
+    fontWeight: '500',
+  },
+});
   const types = useSelector(state => state.incidentTypes.incidentTypes);
   const userRole = useSelector(state => state.user.role);
   const dispatch = useDispatch();
@@ -386,7 +565,7 @@ export default function AddIncident({ navigation }) {
                     <MaterialCommunityIcons
                       name="camera-plus"
                       size={50}
-                      color={Colors.textColor}
+                      color={colors.textColor}
                       style={styles.cameraIcon}
                     />
                     <Text style={styles.photoText}>
@@ -406,7 +585,7 @@ export default function AddIncident({ navigation }) {
                       <MaterialCommunityIcons
                         name="camera-plus"
                         size={24}
-                        color={Colors.textColor}
+                        color={colors.textColor}
                       />
                       <Text style={styles.changePhotoText}>Change Photo</Text>
                     </View>
@@ -479,7 +658,7 @@ export default function AddIncident({ navigation }) {
                     value={values.description}
                     onChangeText={handleChange('description')}
                     style={styles.textArea}
-                    placeholderTextColor={Colors.textSecondary}
+                    placeholderTextColor={colors.textSecondary}
                   />
                 </View>
               </View>
@@ -532,179 +711,3 @@ export default function AddIncident({ navigation }) {
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  scrollContainer: {
-    flexGrow: 1,
-    backgroundColor: Colors.blueGray,
-  },
-  container: {
-    flex: 1,
-    padding: 20,
-  },
-
-  // Photo Section Styles
-  photoSection: {
-    marginBottom: 30,
-  },
-  photoSquare: {
-    width: '100%',
-    height: 280, // Increased from 220 to 280
-    backgroundColor: Colors.orange,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  cameraIcon: {
-    marginBottom: 12, // Increased from 8 to 12
-  },
-  photoText: {
-    color: Colors.textColor,
-    fontSize: 16, // Increased from 14 to 16
-    fontWeight: '600',
-    textAlign: 'center',
-    paddingHorizontal: 20,
-    lineHeight: 20, // Increased from 18 to 20
-  },
-  photoSquareWithImage: {
-    width: '100%',
-    height: 280, // Increased from 220 to 280
-    borderRadius: 12,
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  photoImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  changePhotoOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    paddingVertical: 12, // Increased from 8 to 12
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  changePhotoText: {
-    color: Colors.textColor,
-    fontSize: 14, // Increased from 12 to 14
-    fontWeight: '600',
-    marginTop: 4, // Increased from 2 to 4
-  },
-  // Form Section Styles - Updated to match SignUp
-  formSection: {
-    backgroundColor: Colors.darkerBlueGray,
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  inputGroup: {
-    marginBottom: 24,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: Colors.textColor,
-    marginBottom: 8,
-  },
-
-  // Severity Section Styles - Updated to match SignUp input style
-  severityContainer: {
-    gap: 12,
-  },
-  severityButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12, // Changed from 8 to 12 to match SignUp
-    borderWidth: 1,
-    borderColor: Colors.orange, // Changed to match SignUp border color
-    backgroundColor: Colors.blueGray, // Changed to match SignUp background
-    height: 56, // Added height to match SignUp inputs
-  },
-  severityButtonSelected: {
-    borderColor: Colors.orange,
-    backgroundColor: Colors.blueGray, // Keep consistent with unselected
-  },
-  radioCircle: {
-    height: 20,
-    width: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: Colors.textSecondary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  selectedDot: {
-    height: 10,
-    width: 10,
-    borderRadius: 5,
-    backgroundColor: Colors.orange,
-  },
-  severityText: {
-    fontSize: 16,
-    color: Colors.textSecondary,
-    fontWeight: '500',
-  },
-  severityTextSelected: {
-    color: Colors.orange,
-    fontWeight: '600',
-  },
-  textArea: {
-    borderWidth: 1, // Changed from 1.5 to 1 to match SignUp
-    borderColor: Colors.orange, // Changed to match SignUp border color
-    borderRadius: 12, // Changed from 8 to 12 to match SignUp
-    padding: 16, // Changed from 12 to 16 to match SignUp padding
-    height: 100,
-    textAlignVertical: 'top',
-    backgroundColor: Colors.blueGray, // Changed to match SignUp background
-    fontSize: 16,
-    color: Colors.textColor,
-  },
-
-  // Submit Section Styles
-  submitSection: {
-    marginTop: 10,
-  },
-  analyzeButton: {
-    backgroundColor: Colors.orange,
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  analyzeButtonText: {
-    color: Colors.textColor,
-    fontSize: 18,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-
-  // Error Styles
-  error: {
-    color: Colors.orange,
-    fontSize: 14,
-    marginTop: 6,
-    fontWeight: '500',
-  },
-});

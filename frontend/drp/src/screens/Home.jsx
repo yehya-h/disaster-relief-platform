@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -17,10 +17,194 @@ import { getCurrentLocation } from "../services/location/locationService";
 import { getCountryNameFromCoords } from "../services/geocoding/geocodingService";
 import LocationMap from "../services/map/mapService";
 import { inHitArea, getIncident } from "../services/hitArea/inHitArea";
-import Colors from '../constants/colors';
+import { useTheme } from '../hooks/useThem';
 import { useSelector } from 'react-redux';
 
 export default function Home() {
+  const { colors, isDarkMode } = useTheme(); 
+  
+  // Always call hooks at the top level
+  const userRole = useSelector(state => state.user.role);
+  
+  // Always call useDrawerStatus, but handle the case where drawer might not exist
+  let drawerStatus = null;
+  try {
+    drawerStatus = useDrawerStatus();
+  } catch (error) {
+    // If drawer navigator is not available, drawerStatus will remain null
+    console.log('Drawer navigator not available');
+  }
+
+  const styles = StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: colors.darkerBlueGray,
+    },
+    container: {
+      flex: 1,
+      backgroundColor: colors.darkerBlueGray,
+    },
+    content: {
+      flex: 1,
+      paddingHorizontal: 18,
+      paddingTop: 10,
+    },
+    headerIconContainer: {
+      alignSelf: 'center',
+      marginBottom: 10,
+      backgroundColor: colors.darkestBlueGray,
+      padding: 14,
+      borderRadius: 50,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.25,
+      shadowRadius: 6,
+      elevation: 6,
+      alignItems: 'center',
+    },
+    headerIconText: {
+      marginTop: 6,
+      fontSize: 14,
+      color: colors.textSecondary,
+      fontWeight: '300',
+      textAlign: 'center',
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    loadingText: {
+      marginTop: 16,
+      fontSize: 16,
+      color: colors.textSecondary,
+    },
+    errorContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: 32,
+    },
+    errorText: {
+      marginTop: 16,
+      fontSize: 16,
+      color: colors.red,
+      textAlign: 'center',
+    },
+    retryText: {
+      marginTop: 12,
+      fontSize: 16,
+      color: colors.orange,
+      textAlign: 'center',
+      textDecorationLine: 'underline',
+    },
+    locationHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: 8,
+      margin: 8,
+    },
+    locationName: {
+      fontSize: 28,
+      fontWeight: '500',
+      color: colors.textColor,
+      textAlign: 'center',
+      marginBottom: 20,
+    },
+    mapCard: {
+      backgroundColor: colors.blueGray,
+      borderRadius: 14,
+      padding: 16,
+      marginBottom: 18,
+      shadowColor: '#000',
+      shadowOpacity: 0.12,
+      shadowRadius: 8,
+      elevation: 5,
+    },
+    mapHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 12,
+    },
+    mapTitle: {
+      fontSize: 20,
+      fontWeight: '600',
+      color: colors.textColor,
+      marginLeft: 8,
+    },
+    statusCard: {
+      backgroundColor: colors.blueGray,
+      borderRadius: 14,
+      padding: 16,
+      marginBottom: 18,
+      borderLeftWidth: 5,
+      shadowColor: '#000',
+      shadowOpacity: 0.12,
+      shadowRadius: 8,
+      elevation: 5,
+    },
+    statusHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    statusTitle: {
+      fontSize: 18,
+      fontWeight: '600',
+      marginLeft: 8,
+    },
+    statusText: {
+      fontSize: 16,
+      color: colors.textColor,
+      lineHeight: 22,
+    },
+    statusLoadingText: {
+      marginTop: 8,
+      fontSize: 16,
+      color: colors.textSecondary,
+      textAlign: 'center',
+    },
+    simpleTipText: {
+      marginTop: 16,
+      fontSize: 16,
+      color: colors.textSecondary,
+      fontStyle: 'italic',
+      lineHeight: 22,
+      textAlign: 'center',
+      opacity: 0.85,
+    },
+  }); 
+
+  const Status = ({ isSafe, types }) => {
+    if (isSafe === null) {
+      return (
+        <View style={styles.statusCard}>
+          <ActivityIndicator size="small" color={colors.orange} />
+          <Text style={styles.statusLoadingText}>Checking area status...</Text>
+        </View>
+      );
+    }
+
+    const statusColor = isSafe ? colors.green : colors.red;
+    const statusIcon = isSafe ? 'check-circle' : 'alert-triangle';
+    const statusText = isSafe
+      ? 'You are in a safe area.'
+      : `You're in an affected area: ${types.join(', ')}. Stay safe.`;
+
+    return (
+      <View style={[styles.statusCard, { borderLeftColor: statusColor }]}>
+        <View style={styles.statusHeader}>
+          <Feather name={statusIcon} size={24} color={statusColor} />
+          <Text style={[styles.statusTitle, { color: statusColor }]}>
+            {isSafe ? 'Safe Area' : 'Affected Area'}
+          </Text>
+        </View>
+        <Text style={styles.statusText}>{statusText}</Text>
+      </View>
+    );
+  };
+
   const defaultTips = [
     "Safety doesn't happen by accident.",
     "Stay alert. Stay alive.",
@@ -41,17 +225,18 @@ export default function Home() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isMapReady, setIsMapReady] = useState(false);
 
-  const userRole = useSelector(state => state.user.role);
+  // Handle drawer status changes only if drawer is available and user role allows it
+  useEffect(() => {
+    if (
+      userRole !== undefined && 
+      userRole !== null && 
+      userRole !== 1 && 
+      drawerStatus === 'closed'
+    ) {
+      setMapKey(prev => prev + 1);
+    }
+  }, [drawerStatus, userRole]);
 
-  if (userRole !== undefined && userRole !== null && userRole !== 1) {
-    const drawerStatus = useDrawerStatus();
-
-    useEffect(() => {
-      if (drawerStatus === 'closed') {
-        setMapKey(prev => prev + 1);
-      }
-    }, [drawerStatus]);
-  }
   useEffect(() => {
     if (safetyTips.length > 0) {
       setRandomQuote(
@@ -64,25 +249,20 @@ export default function Home() {
     }
   }, [safetyTips]);
 
-  //  refresh every 10 min
   useEffect(() => {
     const interval = setInterval(() => {
-      console.log('Auto-refreshing location...');
       setRefreshTrigger(prev => prev + 1);
     }, 10 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 
-  // Main data fetching logic with hit area check
   useFocusEffect(
     useCallback(() => {
       let isActive = true;
-
       async function fetchLocationData() {
         try {
           setLoading(true);
           setError(null);
-
           const hasPermission = await checkAndRequestLocationPermission();
           if (!hasPermission) {
             if (isActive) {
@@ -91,7 +271,6 @@ export default function Home() {
             }
             return;
           }
-
           const loc = await getCurrentLocation();
           if (!loc) {
             if (isActive) {
@@ -100,52 +279,40 @@ export default function Home() {
             }
             return;
           }
-
           if (!isActive) return;
-
           setLocation(loc);
           const name = await getCountryNameFromCoords(loc.latitude, loc.longitude);
           if (isActive) setLocationName(name);
-
           const isInHitArea = await inHitArea(loc.longitude, loc.latitude);
           if (!isActive) return;
-
           setIsSafe(!isInHitArea);
-
           if (isInHitArea) {
             const incidents = await getIncident(loc.longitude, loc.latitude);
             if (isActive && Array.isArray(incidents) && incidents.length > 0) {
-              setHitAreas(incidents);
               const types = incidents.map(i => i.typeId?.name).filter(Boolean);
               const tips = incidents.flatMap(i => i.typeId?.safetyTips || []);
               setIncidentTypes([...new Set(types)]);
               setSafetyTips([...new Set(tips)]);
             } else if (isActive) {
-              setHitAreas([]);
               setIncidentTypes([]);
               setSafetyTips(defaultTips);
             }
           } else if (isActive) {
-            setHitAreas([]);
             setIncidentTypes([]);
             setSafetyTips(defaultTips);
           }
-
           if (isActive) {
             setLoading(false);
             setMapKey(prev => prev + 1);
           }
-        } catch (err) {
-          console.error('Error fetching location data:', err);
+        } catch {
           if (isActive) {
             setError('Failed to load location data. Please try again.');
             setLoading(false);
           }
         }
       }
-
       fetchLocationData();
-
       return () => {
         isActive = false;
       };
@@ -154,13 +321,10 @@ export default function Home() {
 
   useFocusEffect(
     useCallback(() => {
-      console.log('Home focused — refreshing map');
       setMapKey(prev => prev + 1);
-
       const timer = setTimeout(() => {
         setIsMapReady(true);
       }, 100);
-
       return () => {
         clearTimeout(timer);
         setIsMapReady(false);
@@ -169,24 +333,21 @@ export default function Home() {
   );
 
   const refreshLocationData = useCallback(() => {
-    console.log('Manual refresh triggered');
     setRefreshTrigger(prev => prev + 1);
   }, []);
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor={Colors.darkerBlueGray} />
+      <StatusBar barStyle="light-content" backgroundColor={colors.darkerBlueGray} />
       <View style={styles.container}>
-        <HeaderIcon />
-
         {loading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={Colors.orange} />
+            <ActivityIndicator size="large" color={colors.orange} />
             <Text style={styles.loadingText}>Getting your location...</Text>
           </View>
         ) : error ? (
           <View style={styles.errorContainer}>
-            <Feather name="alert-circle" size={48} color={Colors.red} />
+            <Feather name="alert-circle" size={48} color={colors.red} />
             <Text style={styles.errorText}>{error}</Text>
             <Text style={styles.retryText} onPress={refreshLocationData}>
               Tap to retry
@@ -194,24 +355,22 @@ export default function Home() {
           </View>
         ) : (
           <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-            <View style={styles.locationCard}>
-              <View style={styles.locationHeader}>
-                <Text style={styles.locationTitle}>Current Location</Text>
-              </View>
-              <Text style={styles.locationName}>{locationName}</Text>
+            <View style={styles.locationHeader}>
+              <Feather name="map-pin" size={45} color={colors.orange} />
             </View>
+            <Text style={styles.locationName}>{locationName}</Text>
 
             {location?.latitude && location?.longitude && isMapReady && (
               <View style={styles.mapCard}>
                 <View style={styles.mapHeader}>
-                  <Feather name="map" size={24} color={Colors.orange} />
+                  <Feather name="map" size={24} color={colors.orange} />
                   <Text style={styles.mapTitle}>Area Map</Text>
                 </View>
                 <LocationMap
                   key={mapKey}
                   latitude={location.latitude}
                   longitude={location.longitude}
-                  height={250}
+                  height={300}
                   width={'100%'}
                   regionName={locationName}
                   hitAreas={hitAreas}
@@ -220,7 +379,6 @@ export default function Home() {
             )}
 
             <Status isSafe={isSafe} types={incidentTypes} />
-
             <Text style={styles.simpleTipText}>{randomQuote}</Text>
           </ScrollView>
         )}
@@ -228,191 +386,3 @@ export default function Home() {
     </SafeAreaView>
   );
 }
-
-const HeaderIcon = () => (
-  <View style={styles.headerIconContainer}>
-    <Feather name="map-pin" size={50} color={Colors.orange} />
-    <Text style={styles.headerIconText}>Your spot, your safety.</Text>
-  </View>
-);
-
-const Status = ({ isSafe, types }) => {
-  if (isSafe === null) {
-    return (
-      <View style={styles.statusCard}>
-        <ActivityIndicator size="small" color={Colors.orange} />
-        <Text style={styles.statusLoadingText}>Checking area status...</Text>
-      </View>
-    );
-  }
-
-  const statusColor = isSafe ? Colors.green : Colors.red;
-  const statusIcon = isSafe ? 'check-circle' : 'alert-triangle';
-  const statusText = isSafe
-    ? 'You are in a safe area.'
-    : `You're in an affected area: ${types.join(', ')}. Stay safe.`;
-
-  return (
-    <View style={[styles.statusCard, { borderLeftColor: statusColor }]}>
-      <View style={styles.statusHeader}>
-        <Feather name={statusIcon} size={24} color={statusColor} />
-        <Text style={[styles.statusTitle, { color: statusColor }]}>
-          {isSafe ? 'Safe Area' : 'Affected Area'}
-        </Text>
-      </View>
-      <Text style={styles.statusText}>{statusText}</Text>
-    </View>
-  );
-};
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: Colors.darkerBlueGray,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: Colors.darkerBlueGray,
-  },
-  content: {
-    flex: 1,
-    padding: 0,
-  },
-  headerIconContainer: {
-    alignSelf: 'center',
-    marginVertical: 0,
-    backgroundColor: Colors.darkestBlueGray,
-    padding: 12,
-    borderRadius: 40,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
-    alignItems: 'center',
-  },
-  headerIconText: {
-    marginTop: 6,
-    fontSize: 14,
-    color: Colors.textSecondary,
-    fontWeight: '300',
-    textAlign: 'center',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: Colors.textSecondary,
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 32,
-  },
-  errorText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: Colors.red,
-    textAlign: 'center',
-  },
-  retryText: {
-    marginTop: 12,
-    fontSize: 16,
-    color: Colors.orange,
-    textAlign: 'center',
-    textDecorationLine: 'underline',
-  },
-  locationCard: {
-    backgroundColor: Colors.blueGray,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  locationHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  locationTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: Colors.textColor,
-    marginLeft: 8,
-  },
-  locationName: {
-    fontSize: 26,
-    fontWeight: '200',
-    color: Colors.orange,
-    textAlign: 'center',
-  },
-  mapCard: {
-    backgroundColor: Colors.blueGray,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  mapHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  mapTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: Colors.textColor,
-    marginLeft: 8,
-  },
-  statusCard: {
-    backgroundColor: Colors.blueGray,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    borderLeftWidth: 4,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  statusHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  statusTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginLeft: 8,
-  },
-  statusText: {
-    fontSize: 16,
-    color: Colors.textColor,
-    lineHeight: 22,
-  },
-  statusLoadingText: {
-    marginTop: 8,
-    fontSize: 16,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-  },
-  simpleTipText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: Colors.textSecondary,
-    fontStyle: 'italic',
-    lineHeight: 22,
-    textAlign: 'center',
-  },
-});

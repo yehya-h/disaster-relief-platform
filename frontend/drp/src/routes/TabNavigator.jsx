@@ -9,25 +9,27 @@ import MapScreen from '../screens/MapScreen';
 import AuthStack from './Authstack';
 import Posts from '../screens/Posts';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import Colors from '../constants/colors';
+import { useTheme } from '../hooks/useThem'; // Assuming this is the correct path
 
 const Tab = createBottomTabNavigator();
 
 export default function TabNavigator({ setIsLoggedIn, isLoggedIn }) {
+  const { colors, isDarkMode } = useTheme();
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: true,
         headerStyle: {
-          backgroundColor: Colors.darkestBlueGray,
+          backgroundColor: colors.darkestBlueGray,
         },
-        headerTintColor: Colors.textColor,
+        headerTintColor: colors.textColor,
         headerTitleStyle: {
-          color: Colors.textColor,
+          color: colors.textColor,
         },
         headerLeft: () =>
           isLoggedIn ? (
-            <DrawerToggleButton tintColor={Colors.textColor} />
+            <DrawerToggleButton tintColor={colors.textColor} />
           ) : null,
         tabBarIcon: ({ color, size }) => {
           let iconName = '';
@@ -49,11 +51,11 @@ export default function TabNavigator({ setIsLoggedIn, isLoggedIn }) {
           );
         },
         tabBarStyle: {
-          backgroundColor: Colors.darkerBlueGray,
-          borderTopColor: Colors.textColor,
+          backgroundColor: colors.darkerBlueGray,
+          borderTopColor: colors.textColor,
         },
-        tabBarActiveTintColor: Colors.orange,
-        tabBarInactiveTintColor: Colors.textColor,
+        tabBarActiveTintColor: colors.orange,
+        tabBarInactiveTintColor: colors.textColor,
       })}
     >
       <Tab.Screen name="Home" component={Home} options={{ title: 'Home' }} />

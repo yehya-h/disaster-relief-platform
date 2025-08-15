@@ -3,7 +3,9 @@ import { View, Text, StyleSheet, TouchableOpacity, TextInput, Modal } from 'reac
 import { Formik } from 'formik';
 import * as yup from 'yup';
 import { updateUserPassword } from '../api/UserApi';
-import Colors from '../constants/colors';
+// import colors from '../constants/colors';
+import { useTheme } from '../hooks/useThem';
+
 import Icon from 'react-native-vector-icons/Ionicons';
 
 const updatePasswordSchema = yup.object({
@@ -17,6 +19,179 @@ const updatePasswordSchema = yup.object({
 });
 
 export default function UpdatePassword({ navigation }) {
+  const { colors, isDarkMode } = useTheme(); 
+  
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.darkestBlueGray,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 50,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.blueGray,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.textColor,
+  },
+  placeholder: {
+    width: 40,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 24,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 32,
+  },
+  formContainer: {
+    flex: 1,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.blueGray,
+    borderRadius: 12,
+    marginBottom: 16,
+    paddingHorizontal: 16,
+    height: 56,
+    borderWidth: 1,
+    borderColor: colors.orange,
+  },
+  inputIcon: {
+    marginRight: 12,
+  },
+  input: {
+    flex: 1,
+    color: colors.textColor,
+    fontSize: 16,
+  },
+  eyeIcon: {
+    padding: 4,
+  },
+  error: {
+    color: colors.danger,
+    fontSize: 14,
+    marginBottom: 10,
+    marginTop: -8,
+    marginLeft: 4,
+  },
+  securityTips: {
+    backgroundColor: colors.blueGray,
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 20,
+    marginBottom: 32,
+    borderWidth: 1,
+    borderColor: colors.textSecondary,
+  },
+  securityTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.textColor,
+    marginBottom: 12,
+  },
+  tipItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  tipText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginLeft: 8,
+  },
+  updateButton: {
+    backgroundColor: colors.orange,
+    borderRadius: 12,
+    height: 56,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: colors.orange,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  updateButtonDisabled: {
+    backgroundColor: colors.textSecondary,
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  updateButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    marginRight: 8,
+  },
+  buttonIcon: {
+    marginLeft: 4,
+  },
+  // Custom Alert Styles
+  alertOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  alertContainer: {
+    backgroundColor: colors.blueGray,
+    borderRadius: 12,
+    padding: 24,
+    width: '90%',
+    maxWidth: 300,
+    // borderWidth: 1,
+    // borderColor: colors.orange,
+  },
+  alertTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.textColor,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  alertMessage: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  alertButton: {
+    backgroundColor: colors.orange,
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    alignSelf: 'center',
+  },
+  alertButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+});
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -69,7 +244,7 @@ export default function UpdatePassword({ navigation }) {
 
       <View style={styles.header}>
         <TouchableOpacity onPress={goBack} style={styles.backButton}>
-          <Icon name="chevron-back" size={24} color={Colors.textColor} />
+          <Icon name="chevron-back" size={24} color={colors.textColor} />
         </TouchableOpacity>
         <Text style={styles.title}>Update Password</Text>
         <View style={styles.placeholder} />
@@ -92,11 +267,11 @@ export default function UpdatePassword({ navigation }) {
           {({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
             <View style={styles.formContainer}>
               <View style={styles.inputContainer}>
-                <Icon name="lock-closed-outline" size={20} color={Colors.textSecondary} style={styles.inputIcon} />
+                <Icon name="lock-closed-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Current Password"
-                  placeholderTextColor={Colors.textSecondary}
+                  placeholderTextColor={colors.textSecondary}
                   secureTextEntry={!showCurrentPassword}
                   value={values.currentPassword}
                   onChangeText={handleChange('currentPassword')}
@@ -110,7 +285,7 @@ export default function UpdatePassword({ navigation }) {
                   <Icon
                     name={showCurrentPassword ? "eye-outline" : "eye-off-outline"}
                     size={20}
-                    color={Colors.orange}
+                    color={colors.orange}
                   />
                 </TouchableOpacity>
               </View>
@@ -119,11 +294,11 @@ export default function UpdatePassword({ navigation }) {
               )}
 
               <View style={styles.inputContainer}>
-                <Icon name="lock-closed-outline" size={20} color={Colors.textSecondary} style={styles.inputIcon} />
+                <Icon name="lock-closed-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   placeholder="New Password"
-                  placeholderTextColor={Colors.textSecondary}
+                  placeholderTextColor={colors.textSecondary}
                   secureTextEntry={!showNewPassword}
                   value={values.newPassword}
                   onChangeText={handleChange('newPassword')}
@@ -137,7 +312,7 @@ export default function UpdatePassword({ navigation }) {
                   <Icon
                     name={showNewPassword ? "eye-outline" : "eye-off-outline"}
                     size={20}
-                    color={Colors.orange}
+                    color={colors.orange}
                   />
                 </TouchableOpacity>
               </View>
@@ -146,11 +321,11 @@ export default function UpdatePassword({ navigation }) {
               )}
 
               <View style={styles.inputContainer}>
-                <Icon name="lock-closed-outline" size={20} color={Colors.textSecondary} style={styles.inputIcon} />
+                <Icon name="lock-closed-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Confirm New Password"
-                  placeholderTextColor={Colors.textSecondary}
+                  placeholderTextColor={colors.textSecondary}
                   secureTextEntry={!showConfirmPassword}
                   value={values.confirmPassword}
                   onChangeText={handleChange('confirmPassword')}
@@ -164,7 +339,7 @@ export default function UpdatePassword({ navigation }) {
                   <Icon
                     name={showConfirmPassword ? "eye-outline" : "eye-off-outline"}
                     size={20}
-                    color={Colors.orange}
+                    color={colors.orange}
                   />
                 </TouchableOpacity>
               </View>
@@ -208,175 +383,3 @@ export default function UpdatePassword({ navigation }) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.darkestBlueGray,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 50,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.blueGray,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: Colors.textColor,
-  },
-  placeholder: {
-    width: 40,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 24,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 32,
-  },
-  formContainer: {
-    flex: 1,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.blueGray,
-    borderRadius: 12,
-    marginBottom: 16,
-    paddingHorizontal: 16,
-    height: 56,
-    borderWidth: 1,
-    borderColor: Colors.orange,
-  },
-  inputIcon: {
-    marginRight: 12,
-  },
-  input: {
-    flex: 1,
-    color: Colors.textColor,
-    fontSize: 16,
-  },
-  eyeIcon: {
-    padding: 4,
-  },
-  error: {
-    color: Colors.danger,
-    fontSize: 14,
-    marginBottom: 10,
-    marginTop: -8,
-    marginLeft: 4,
-  },
-  securityTips: {
-    backgroundColor: Colors.blueGray,
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 20,
-    marginBottom: 32,
-    borderWidth: 1,
-    borderColor: Colors.textSecondary,
-  },
-  securityTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: Colors.textColor,
-    marginBottom: 12,
-  },
-  tipItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  tipText: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    marginLeft: 8,
-  },
-  updateButton: {
-    backgroundColor: Colors.orange,
-    borderRadius: 12,
-    height: 56,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: Colors.orange,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  updateButtonDisabled: {
-    backgroundColor: Colors.textSecondary,
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-  updateButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-    marginRight: 8,
-  },
-  buttonIcon: {
-    marginLeft: 4,
-  },
-  // Custom Alert Styles
-  alertOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  alertContainer: {
-    backgroundColor: Colors.blueGray,
-    borderRadius: 12,
-    padding: 24,
-    width: '90%',
-    maxWidth: 300,
-    // borderWidth: 1,
-    // borderColor: Colors.orange,
-  },
-  alertTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: Colors.textColor,
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  alertMessage: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 24,
-  },
-  alertButton: {
-    backgroundColor: Colors.orange,
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    alignSelf: 'center',
-  },
-  alertButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});

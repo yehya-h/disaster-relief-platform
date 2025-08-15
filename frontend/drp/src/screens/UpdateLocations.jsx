@@ -4,10 +4,238 @@ import { useSelector, useDispatch } from 'react-redux';
 import { updateUserLocations } from '../api/UserApi';
 import { updateUserDetails } from '../redux/UserSlice';
 import LocationPicker from '../components/LocationPicker';
-import Colors from '../constants/colors';
+// import colors from '../constants/colors';
+import { useTheme } from '../hooks/useThem';
+
 import Icon from 'react-native-vector-icons/Ionicons';
 
 export default function UpdateLocations({ navigation }) {
+  const { colors, isDarkMode } = useTheme(); 
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.darkestBlueGray,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 50,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.blueGray,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.textColor,
+  },
+  placeholder: {
+    width: 40,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 24,
+  },
+  locationsContainer: {
+    flex: 1,
+  },
+  locationCard: {
+    backgroundColor: colors.blueGray,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: colors.orange,
+  },
+  locationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  locationName: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.textColor,
+    marginLeft: 8,
+    flex: 1,
+  },
+  locationInfo: {
+    marginBottom: 16,
+  },
+  locationAddress: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginBottom: 4,
+    lineHeight: 20,
+  },
+  locationCoords: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    fontFamily: 'monospace',
+    opacity: 0.7,
+  },
+  locationActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginLeft: 8,
+  },
+  editButton: {
+    backgroundColor: '#6B7280',
+  },
+  removeButton: {
+    backgroundColor: '#FF5722',
+  },
+  disabledButton: {
+    backgroundColor: colors.textSecondary,
+    opacity: 0.5,
+  },
+  actionButtonText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '500',
+    marginLeft: 4,
+  },
+  addLocationButton: {
+    backgroundColor: colors.blueGray,
+    borderWidth: 2,
+    borderColor: colors.orange,
+    borderStyle: 'dashed',
+    padding: 20,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    flexDirection: 'row',
+  },
+  addLocationText: {
+    color: colors.orange,
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginTop: 16,
+    paddingHorizontal: 40,
+  },
+  locationCounter: {
+    alignItems: 'center',
+    marginVertical: 16,
+  },
+  counterText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    fontWeight: '500',
+  },
+  footer: {
+    paddingVertical: 20,
+  },
+  saveButton: {
+    backgroundColor: colors.orange,
+    borderRadius: 12,
+    height: 56,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: colors.orange,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  saveButtonDisabled: {
+    backgroundColor: colors.textSecondary,
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  saveButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    marginRight: 8,
+  },
+  buttonIcon: {
+    marginLeft: 4,
+  },
+  // Custom Alert Styles
+  alertOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  alertContainer: {
+    backgroundColor: colors.blueGray,
+    borderRadius: 12,
+    padding: 24,
+    width: '90%',
+    maxWidth: 300,
+    // borderWidth: 1,
+    // borderColor: colors.orange,
+  },
+  alertTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.textColor,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  alertMessage: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  alertButton: {
+    backgroundColor: colors.orange,
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    alignSelf: 'center',
+  },
+  alertButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+});
   const dispatch = useDispatch();
   const user = useSelector((state) => state.user);
   const [locations, setLocations] = useState([]);
@@ -121,7 +349,7 @@ export default function UpdateLocations({ navigation }) {
 
       <View style={styles.header}>
         <TouchableOpacity onPress={goBack} style={styles.backButton}>
-          <Icon name="chevron-back" size={24} color={Colors.textColor} />
+          <Icon name="chevron-back" size={24} color={colors.textColor} />
         </TouchableOpacity>
         <Text style={styles.title}>Update Locations</Text>
         <View style={styles.placeholder} />
@@ -136,7 +364,7 @@ export default function UpdateLocations({ navigation }) {
           {locations.map((location, index) => (
             <View key={index} style={styles.locationCard}>
               <View style={styles.locationHeader}>
-                <Icon name="location" size={20} color={Colors.orange} />
+                <Icon name="location" size={20} color={colors.orange} />
                 <Text style={styles.locationName}>{location.name}</Text>
               </View>
 
@@ -180,7 +408,7 @@ export default function UpdateLocations({ navigation }) {
               style={styles.addLocationButton}
               onPress={handleAddLocation}
             >
-              <Icon name="add-circle-outline" size={24} color={Colors.orange} />
+              <Icon name="add-circle-outline" size={24} color={colors.orange} />
               <Text style={styles.addLocationText}>Add New Location</Text>
             </TouchableOpacity>
           )}
@@ -188,7 +416,7 @@ export default function UpdateLocations({ navigation }) {
           {/* Empty State */}
           {locations.length === 0 && (
             <View style={styles.emptyState}>
-              <Icon name="location-outline" size={64} color={Colors.textSecondary} />
+              <Icon name="location-outline" size={64} color={colors.textSecondary} />
               <Text style={styles.emptyStateText}>
                 No locations added yet. Tap the button above to add your first location.
               </Text>
@@ -254,228 +482,3 @@ export default function UpdateLocations({ navigation }) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.darkestBlueGray,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 50,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.blueGray,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: Colors.textColor,
-  },
-  placeholder: {
-    width: 40,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 24,
-  },
-  locationsContainer: {
-    flex: 1,
-  },
-  locationCard: {
-    backgroundColor: Colors.blueGray,
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: Colors.orange,
-  },
-  locationHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  locationName: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: Colors.textColor,
-    marginLeft: 8,
-    flex: 1,
-  },
-  locationInfo: {
-    marginBottom: 16,
-  },
-  locationAddress: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    marginBottom: 4,
-    lineHeight: 20,
-  },
-  locationCoords: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-    fontFamily: 'monospace',
-    opacity: 0.7,
-  },
-  locationActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    marginLeft: 8,
-  },
-  editButton: {
-    backgroundColor: '#6B7280',
-  },
-  removeButton: {
-    backgroundColor: '#FF5722',
-  },
-  disabledButton: {
-    backgroundColor: Colors.textSecondary,
-    opacity: 0.5,
-  },
-  actionButtonText: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: '500',
-    marginLeft: 4,
-  },
-  addLocationButton: {
-    backgroundColor: Colors.blueGray,
-    borderWidth: 2,
-    borderColor: Colors.orange,
-    borderStyle: 'dashed',
-    padding: 20,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-    flexDirection: 'row',
-  },
-  addLocationText: {
-    color: Colors.orange,
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 8,
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 60,
-  },
-  emptyStateText: {
-    fontSize: 16,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 22,
-    marginTop: 16,
-    paddingHorizontal: 40,
-  },
-  locationCounter: {
-    alignItems: 'center',
-    marginVertical: 16,
-  },
-  counterText: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    fontWeight: '500',
-  },
-  footer: {
-    paddingVertical: 20,
-  },
-  saveButton: {
-    backgroundColor: Colors.orange,
-    borderRadius: 12,
-    height: 56,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: Colors.orange,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  saveButtonDisabled: {
-    backgroundColor: Colors.textSecondary,
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-  saveButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-    marginRight: 8,
-  },
-  buttonIcon: {
-    marginLeft: 4,
-  },
-  // Custom Alert Styles
-  alertOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  alertContainer: {
-    backgroundColor: Colors.blueGray,
-    borderRadius: 12,
-    padding: 24,
-    width: '90%',
-    maxWidth: 300,
-    // borderWidth: 1,
-    // borderColor: Colors.orange,
-  },
-  alertTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: Colors.textColor,
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  alertMessage: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 24,
-  },
-  alertButton: {
-    backgroundColor: Colors.orange,
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    alignSelf: 'center',
-  },
-  alertButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});

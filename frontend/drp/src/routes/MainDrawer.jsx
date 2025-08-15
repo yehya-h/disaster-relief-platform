@@ -10,7 +10,7 @@ import TabNavigator from './TabNavigator.jsx';
 import CustomDrawerContent from '../components/CustomDrawerContent.jsx';
 import Notifications from '../screens/Notifications.jsx';
 import NotificationDetails from '../screens/NotificationsDetails.jsx';
-import Colors from '../constants/colors.js';
+import { useTheme } from '../hooks/useThem'; // Assuming this is the correct path
 
 const Drawer = createDrawerNavigator();
 const Stack = createNativeStackNavigator();
@@ -39,6 +39,8 @@ function NotificationsStack() {
 }
 
 export default function MainDrawer({ setIsLoggedIn, isLoggedIn }) {
+  const { colors, isDarkMode } = useTheme();
+
   return (
     <Drawer.Navigator
       drawerContent={props => (
@@ -47,15 +49,15 @@ export default function MainDrawer({ setIsLoggedIn, isLoggedIn }) {
       screenOptions={{
         headerShown: true,
         // Consistent drawer item styling
-        drawerActiveTintColor: Colors.orange,
-        drawerInactiveTintColor: Colors.textColor,
+        drawerActiveTintColor: colors.orange,
+        drawerInactiveTintColor: colors.textColor,
         drawerStyle: {
-          backgroundColor: Colors.darkerBlueGray,
+          backgroundColor: colors.darkerBlueGray,
         },
         // Consistent drawer item appearance
         drawerItemStyle: {
           borderBottomWidth: 1,
-          borderBottomColor: Colors.darkestBlueGray,
+          borderBottomColor: colors.darkestBlueGray,
           borderRadius: 0, // Remove default rounded corners
           marginVertical: 0,
           marginHorizontal: 0,
@@ -67,11 +69,11 @@ export default function MainDrawer({ setIsLoggedIn, isLoggedIn }) {
         },
         // Header styling
         headerStyle: {
-          backgroundColor: Colors.darkestBlueGray,
+          backgroundColor: colors.darkestBlueGray,
         },
-        headerTintColor: Colors.textColor,
+        headerTintColor: colors.textColor,
         headerTitleStyle: {
-          color: Colors.textColor,
+          color: colors.textColor,
           fontWeight: 'bold',
         },
       }}
@@ -92,8 +94,7 @@ export default function MainDrawer({ setIsLoggedIn, isLoggedIn }) {
       <Drawer.Screen
         name="Notifications"
         component={NotificationsStack}
-                options={{ title: 'Notifications', headerShown: false }}
-
+        options={{ title: 'Notifications', headerShown: false }}
       />
 
       <Drawer.Screen

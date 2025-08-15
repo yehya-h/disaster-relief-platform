@@ -4,10 +4,197 @@ import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { getCountryNameFromCoords } from '../services/geocoding/geocodingService';
 import { checkAndRequestLocationPermission } from "../services/permissions/locationPermissionService";
 import { LocationService } from '../services/LocationService';
-import Colors from '../constants/colors';
+// import colors from '../constants/colors';
+import { useTheme } from '../hooks/useThem';
+
 import Icon from 'react-native-vector-icons/Ionicons';
 
 const LocationPicker = ({ visible, onClose, onLocationSelected, editingLocation }) => {
+    const { colors, isDarkMode } = useTheme();
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.darkestBlueGray,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 50,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.blueGray,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.textColor,
+  },
+  placeholder: {
+    width: 40, // Same width as back button for center alignment
+  },
+  inputSection: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.blueGray,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    height: 56,
+    borderWidth: 1,
+    borderColor: colors.orange,
+  },
+  inputIcon: {
+    marginRight: 12,
+  },
+  input: {
+    flex: 1,
+    color: colors.textColor,
+    fontSize: 16,
+  },
+  mapSection: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  mapContainer: {
+    flex: 1,
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.orange,
+  },
+  map: {
+    flex: 1,
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.blueGray,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: colors.textColor,
+  },
+  locationInfoCard: {
+    backgroundColor: colors.blueGray,
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: colors.orange,
+  },
+  locationInfoHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  locationInfoTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.textColor,
+    marginLeft: 8,
+  },
+  coordinatesText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    fontFamily: 'monospace',
+    marginBottom: 4,
+  },
+  addressText: {
+    fontSize: 14,
+    color: colors.textColor,
+    lineHeight: 20,
+  },
+  footer: {
+    padding: 20,
+  },
+  confirmButton: {
+    backgroundColor: colors.orange,
+    borderRadius: 12,
+    height: 56,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: colors.orange,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  confirmButtonDisabled: {
+    backgroundColor: colors.textSecondary,
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  confirmButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    marginRight: 8,
+  },
+  buttonIcon: {
+    marginLeft: 4,
+  },
+  // Custom Alert Styles
+  alertOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  alertContainer: {
+    backgroundColor: colors.blueGray,
+    borderRadius: 12,
+    padding: 24,
+    width: '90%',
+    maxWidth: 300,
+    // borderWidth: 1,
+    // borderColor: colors.orange,
+  },
+  alertTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.textColor,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  alertMessage: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  alertButton: {
+    backgroundColor: colors.orange,
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    alignSelf: 'center',
+  },
+  alertButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+});
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [locationName, setLocationName] = useState('');
   const [address, setAddress] = useState('');
@@ -137,7 +324,7 @@ const LocationPicker = ({ visible, onClose, onLocationSelected, editingLocation 
 
         <View style={styles.header}>
           <TouchableOpacity onPress={handleCancel} style={styles.backButton}>
-            <Icon name="close" size={24} color={Colors.textColor} />
+            <Icon name="close" size={24} color={colors.textColor} />
           </TouchableOpacity>
           <Text style={styles.title}>{editingLocation ? 'Edit Location' : 'Select Location'}</Text>
           <View style={styles.placeholder} />
@@ -146,11 +333,11 @@ const LocationPicker = ({ visible, onClose, onLocationSelected, editingLocation 
         {/* Location Name Input */}
         <View style={styles.inputSection}>
           <View style={styles.inputContainer}>
-            <Icon name="pencil-outline" size={20} color={Colors.textSecondary} style={styles.inputIcon} />
+            <Icon name="pencil-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
             <TextInput
               style={styles.input}
               placeholder="Enter location name (e.g., Home, Work)"
-              placeholderTextColor={Colors.textSecondary}
+              placeholderTextColor={colors.textSecondary}
               value={locationName}
               onChangeText={setLocationName}
               maxLength={50}
@@ -164,7 +351,7 @@ const LocationPicker = ({ visible, onClose, onLocationSelected, editingLocation 
             {isLocLoading ? (
               // Show loader while location is loading
               <View style={styles.loaderContainer}>
-                <ActivityIndicator size="large" color={Colors.orange} />
+                <ActivityIndicator size="large" color={colors.orange} />
                 <Text style={styles.loadingText}>Loading map...</Text>
               </View>
             ) : (
@@ -184,7 +371,7 @@ const LocationPicker = ({ visible, onClose, onLocationSelected, editingLocation 
                     coordinate={selectedLocation}
                     title="Selected Location"
                     description={locationName || 'Location'}
-                    pinColor={Colors.orange}
+                    pinColor={colors.orange}
                   />
                 )}
               </MapView>
@@ -195,7 +382,7 @@ const LocationPicker = ({ visible, onClose, onLocationSelected, editingLocation 
           {selectedLocation && selectedLocation.latitude && selectedLocation.longitude && (
             <View style={styles.locationInfoCard}>
               <View style={styles.locationInfoHeader}>
-                <Icon name="location" size={20} color={Colors.orange} />
+                <Icon name="location" size={20} color={colors.orange} />
                 <Text style={styles.locationInfoTitle}>Selected Location</Text>
               </View>
               <Text style={styles.coordinatesText}>
@@ -244,188 +431,5 @@ const LocationPicker = ({ visible, onClose, onLocationSelected, editingLocation 
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.darkestBlueGray,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 50,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.blueGray,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: Colors.textColor,
-  },
-  placeholder: {
-    width: 40, // Same width as back button for center alignment
-  },
-  inputSection: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.blueGray,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    height: 56,
-    borderWidth: 1,
-    borderColor: Colors.orange,
-  },
-  inputIcon: {
-    marginRight: 12,
-  },
-  input: {
-    flex: 1,
-    color: Colors.textColor,
-    fontSize: 16,
-  },
-  mapSection: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-  mapContainer: {
-    flex: 1,
-    borderRadius: 16,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: Colors.orange,
-  },
-  map: {
-    flex: 1,
-  },
-  loaderContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: Colors.blueGray,
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: Colors.textColor,
-  },
-  locationInfoCard: {
-    backgroundColor: Colors.blueGray,
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 16,
-    borderWidth: 1,
-    borderColor: Colors.orange,
-  },
-  locationInfoHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  locationInfoTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: Colors.textColor,
-    marginLeft: 8,
-  },
-  coordinatesText: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    fontFamily: 'monospace',
-    marginBottom: 4,
-  },
-  addressText: {
-    fontSize: 14,
-    color: Colors.textColor,
-    lineHeight: 20,
-  },
-  footer: {
-    padding: 20,
-  },
-  confirmButton: {
-    backgroundColor: Colors.orange,
-    borderRadius: 12,
-    height: 56,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: Colors.orange,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  confirmButtonDisabled: {
-    backgroundColor: Colors.textSecondary,
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-  confirmButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-    marginRight: 8,
-  },
-  buttonIcon: {
-    marginLeft: 4,
-  },
-  // Custom Alert Styles
-  alertOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  alertContainer: {
-    backgroundColor: Colors.blueGray,
-    borderRadius: 12,
-    padding: 24,
-    width: '90%',
-    maxWidth: 300,
-    // borderWidth: 1,
-    // borderColor: Colors.orange,
-  },
-  alertTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: Colors.textColor,
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  alertMessage: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 24,
-  },
-  alertButton: {
-    backgroundColor: Colors.orange,
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    alignSelf: 'center',
-  },
-  alertButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});
 
 export default LocationPicker; 
