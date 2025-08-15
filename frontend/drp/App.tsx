@@ -7,7 +7,7 @@
 import 'react-native-reanimated';
 import 'react-native-gesture-handler';
 import React, { useEffect } from 'react';
-import { PermissionsAndroid, Platform, Alert, View, StyleSheet } from 'react-native';
+import { PermissionsAndroid, Platform } from 'react-native';
 import AppNavigator from './src/routes/AppNavigator';
 import store from './src/redux/store';
 import { Provider } from 'react-redux';
@@ -16,11 +16,11 @@ import {
   getFcmToken,
 } from './src/services/fcmService';
 import messaging from '@react-native-firebase/messaging';
+import { Alert } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import Colors from './src/constants/colors';
 
-import { useTheme } from './src/hooks/useThem'
-function AppContent() {
-  const { colors } = useTheme();
-
+function App() {
   useEffect(() => {
     async function setupNotifications() {
       const granted = await requestNotificationPermission();
@@ -41,7 +41,7 @@ function AppContent() {
 
   useEffect(() => {
     const unsubscribe = messaging().onMessage(async remoteMessage => {
-      Alert.alert(
+      showCustomAlert(
         remoteMessage.notification?.title || '🚨 Notification',
         remoteMessage.notification?.body || 'You have a new alert.',
       );
@@ -60,7 +60,9 @@ function AppContent() {
 export default function App() {
   return (
     <Provider store={store}>
-      <AppContent />
+      <View style={styles.container}>
+        <AppNavigator />
+      </View>
     </Provider>
   );
 }
