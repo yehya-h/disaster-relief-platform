@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
       // Animate to 99% over 20 seconds
       Animated.timing(progress, {
         toValue: 99,
-        duration: 30000, // 30 seconds
+        duration: 25000, // 25 seconds
         useNativeDriver: false,
       }).start();
 

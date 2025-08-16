@@ -1,6 +1,10 @@
 /**
  * @format
  */
+// console.log = ()=>{}
+// console.warn = ()=>{}
+// console.info = ()=>{}
+// console.error = ()=>{}
 
 import { AppRegistry } from 'react-native';
 import App from './App';

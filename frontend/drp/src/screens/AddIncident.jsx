@@ -475,7 +475,7 @@ const styles = StyleSheet.create({
       if (err.response?.status === 422) {
         showCustomAlert('Invalid Incident', err.response.data.message);
       } else {
-        console.error('Analysis error:', err);
+        console.log('Analysis error:', err);
         showCustomAlert('Analysis Failed', 'Please try again later.');
       }
     }

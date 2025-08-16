@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
                     {submittingFinal ? (
                       <ActivityIndicator color={colors.textColor} />
                     ) : (
-                      <Text style={styles.approveButtonText}>
+                      <Text style={styles.approveButtonText} numberOfLines={2} adjustsFontSizeToFit>
                         Yes, Submit Report
                       </Text>
                     )}
