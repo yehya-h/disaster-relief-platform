@@ -6,7 +6,7 @@
  */
 import 'react-native-reanimated';
 import 'react-native-gesture-handler';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { PermissionsAndroid, Platform, Alert, View, StyleSheet } from 'react-native';
 import AppNavigator from './src/routes/AppNavigator';
 import store from './src/redux/store';
@@ -19,7 +19,29 @@ import messaging from '@react-native-firebase/messaging';
 
 import { useTheme } from './src/hooks/useThem'
 function AppContent() {
+
   const { colors } = useTheme();
+  const [alertConfig, setAlertConfig] = useState({
+    visible: false,
+    title: '',
+    message: '',
+  });
+
+  const showCustomAlert = (title: string, message: string) => {
+    setAlertConfig({
+      visible: true,
+      title: title,
+      message: message,
+    });
+  };
+
+  const hideCustomAlert = () => {
+    setAlertConfig({
+      visible: false,
+      title: '',
+      message: '',
+    });
+  };
 
   useEffect(() => {
     async function setupNotifications() {
@@ -41,7 +63,7 @@ function AppContent() {
 
   useEffect(() => {
     const unsubscribe = messaging().onMessage(async remoteMessage => {
-      Alert.alert(
+      showCustomAlert(
         remoteMessage.notification?.title || '🚨 Notification',
         remoteMessage.notification?.body || 'You have a new alert.',
       );
