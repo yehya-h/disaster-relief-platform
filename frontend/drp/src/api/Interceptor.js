@@ -5,12 +5,12 @@ import { NODE_API_IP, NODE_API_PORT } from '@env';
 import { generateGuestToken } from '../routes/AppNavigator';
 import { getCurrentLocation } from '../services/location/locationService';
 import { getFcmToken } from '../services/fcmService.js';
-import { authContext  } from '../routes/AppNavigator';
+import { authContext } from '../routes/AppNavigator';
 import { Alert, BackHandler } from 'react-native';
 
 const api = axios.create({
-    baseURL: `http://${NODE_API_IP}:${NODE_API_PORT}/api`
-    // baseURL: `https://disaster-relief-platform-6q95.onrender.com/api`
+    // baseURL: `http://${NODE_API_IP}:${NODE_API_PORT}/api`
+    baseURL: `https://disaster-relief-platform-6q95.onrender.com/api`
 });
 
 api.interceptors.request.use(async (config) => {
@@ -43,8 +43,8 @@ api.interceptors.response.use(
                 authContext.setIsLoggedIn(false);
             }
             Alert.alert(
-                'Session Expired',
-                'You must login.',
+                'Request Failed',
+                'Please re-try again in a few moments.',
                 [{
                     text: 'OK'
                 }]

@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
     } else {
       // Adding new location
       if (locations.length >= 3) {
-        Alert.alert('Maximum Locations', 'You can only add up to 3 locations');
+        showCustomAlert('Maximum Locations', 'You can only add up to 3 locations');
         return;
       }
       dispatch(addLocation(locationData));

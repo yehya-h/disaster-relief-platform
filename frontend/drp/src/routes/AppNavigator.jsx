@@ -17,12 +17,31 @@ import { UserDataHelper } from '../services/UserDataHelper';
 import { LocationService } from '../services/LocationService';
 import { getFcmToken } from '../services/fcmService.js';
 import { useTheme } from '../hooks/useThem'; // Assuming this is the correct path
+import CustomAlert from '../components/CustomAlert.jsx';
 
 export default function AppNavigator() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const dispatch = useDispatch();
   const { colors, isDarkMode } = useTheme();
+
+  // Custom Alert States
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertData, setAlertData] = useState({
+    title: '',
+    message: '',
+    buttons: [],
+  });
+
+  // Custom Alert Function
+  const showCustomAlert = (title, message, buttons = []) => {
+    setAlertData({ title, message, buttons });
+    setAlertVisible(true);
+  };
+
+  const hideCustomAlert = () => {
+    setAlertVisible(false);
+  };
 
   // Create navigation theme using colors from useTheme
   const navigationTheme = {
@@ -83,7 +102,7 @@ export default function AppNavigator() {
                   console.log("generating token for missing user");
                   const token = await generateGuestToken(loc);
                   if (!token) {
-                    Alert.alert(
+                    showCustomAlert(
                       'Token Failure',
                       'Could not generate a token now, try again later.',
                       [
@@ -117,7 +136,7 @@ export default function AppNavigator() {
             console.log('No valid token found, generating guest token');
             const newToken = await generateGuestToken(loc);
             if (!newToken) {
-              Alert.alert(
+              showCustomAlert(
                 'Token Failure',
                 'Could not generate a token now, try again later.',
                 [{
@@ -132,7 +151,7 @@ export default function AppNavigator() {
         } else {
           const token = await generateGuestToken(loc);
           if (!token) {
-            Alert.alert(
+            showCustomAlert(
               'Token Failure',
               'Could not generate a token now, try again later.',
               [
@@ -229,17 +248,25 @@ export default function AppNavigator() {
 
   if (isLoading) {
     return (
-      <View style={{ 
-        flex: 1, 
-        justifyContent: 'center', 
+      <View style={{
+        flex: 1,
+        justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: colors.darkerBlueGray
       }}>
         <ActivityIndicator size="large" color={colors.orange} />
+        {/* Custom Alert */}
+        <CustomAlert
+          visible={alertVisible}
+          title={alertData.title}
+          message={alertData.message}
+          buttons={alertData.buttons}
+          onClose={hideCustomAlert}
+        />
       </View>
     );
   }
-  
+
   return (
     <NavigationContainer theme={navigationTheme}>
       {isLoggedIn ? (
@@ -247,6 +274,14 @@ export default function AppNavigator() {
       ) : (
         <TabNavigator setIsLoggedIn={setIsLoggedIn} isLoggedIn={isLoggedIn} />
       )}
+      {/* Custom Alert */}
+      <CustomAlert
+        visible={alertVisible}
+        title={alertData.title}
+        message={alertData.message}
+        buttons={alertData.buttons}
+        onClose={hideCustomAlert}
+      />
     </NavigationContainer>
   );
 }

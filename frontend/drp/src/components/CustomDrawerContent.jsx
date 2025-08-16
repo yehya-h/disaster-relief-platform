@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
@@ -8,12 +8,31 @@ import DeviceInfo from 'react-native-device-info';
 import { removeUser, addUser } from '../redux/UserSlice';
 import { UserDataHelper } from '../services/UserDataHelper';
 import { useTheme } from '../hooks/useThem';
+import CustomAlert from './CustomAlert';
 import ThemeToggle from './ThemeToggle';
 
 const CustomDrawerContent = props => {
   const { colors, isDarkMode } = useTheme();
   const dispatch = useDispatch();
   const user = useSelector(state => state.user);
+
+  // Custom Alert States
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertData, setAlertData] = useState({
+    title: '',
+    message: '',
+    buttons: [],
+  });
+
+  // Custom Alert Function
+  const showCustomAlert = (title, message, buttons = []) => {
+    setAlertData({ title, message, buttons });
+    setAlertVisible(true);
+  };
+
+  const hideCustomAlert = () => {
+    setAlertVisible(false);
+  };
 
   const getUserDisplayName = () => {
     if (user.fname) {
@@ -62,9 +81,13 @@ const CustomDrawerContent = props => {
 
     } catch (error) {
       console.error('Logout error:', error);
-      Alert.alert('Error', 'Failed to logout. Please try again.');
-    }
-  };
+      // Alert.alert('Error', 'Failed to logout. Please try again.');
+      showCustomAlert(
+        'Error',
+        'Failed to logout. Please try again.'
+      )
+    };
+  }
 
   const styles = StyleSheet.create({
     container: {
@@ -233,6 +256,14 @@ const CustomDrawerContent = props => {
       <View style={styles.footer}>
         <Text style={styles.footerText}>Disaster Relief Platform</Text>
       </View>
+      {/* Custom Alert */}
+      <CustomAlert
+        visible={alertVisible}
+        title={alertData.title}
+        message={alertData.message}
+        buttons={alertData.buttons}
+        onClose={hideCustomAlert}
+      />
     </View>
   );
 };
