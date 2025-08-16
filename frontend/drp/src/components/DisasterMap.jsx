@@ -860,7 +860,7 @@ const DisasterMap = React.memo(
                 latitude: coord[1],
                 longitude: coord[0],
               }))}
-              strokeColor="#FF0000"
+              strokeColor="#00FF00"
               strokeWidth={4}
             />
           )}
