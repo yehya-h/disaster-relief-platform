@@ -7,8 +7,8 @@ const NODE_ENV = import.meta.env.VITE_NODE_ENV || 'development';
 
 // Create axios instance
 const api = axios.create({
-  baseURL: `http://${NODE_API_IP}:${NODE_API_PORT}/api`,
-  // baseURL: NODE_ENV,
+  // baseURL: `http://${NODE_API_IP}:${NODE_API_PORT}/api`,
+  baseURL: NODE_ENV,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',

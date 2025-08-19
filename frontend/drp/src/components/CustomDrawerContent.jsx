@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { logoutUser } from '../api/AuthApi';
 import { getCurrentLocation } from '../services/location/locationService';
@@ -115,7 +115,7 @@ const CustomDrawerContent = props => {
       width: 60,
       height: 60,
       borderRadius: 30,
-      backgroundColor: colors.darkestBlueGray,
+      backgroundColor: '#fff',
       justifyContent: 'center',
       alignItems: 'center',
       shadowColor: '#000',
@@ -123,6 +123,12 @@ const CustomDrawerContent = props => {
       shadowOpacity: 0.25,
       shadowRadius: 4,
       elevation: 4,
+      overflow: 'hidden', // Ensures the logo respects the border radius
+    },
+    logoImage: {
+      width: 100,
+      height: 80,
+      resizeMode: 'contain',
     },
     avatarText: {
       fontSize: 24,
@@ -188,9 +194,10 @@ const CustomDrawerContent = props => {
       <View style={styles.header}>
         <View style={styles.userInfo}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
-              {user.fname ? user.fname[0].toUpperCase() : 'U'}
-            </Text>
+            <Image
+              source={require('../assets/icons/logo.png')}
+              style={styles.logoImage}
+            />
           </View>
           <View style={styles.userText}>
             <Text style={styles.welcomeText}>Welcome</Text>
@@ -254,7 +261,7 @@ const CustomDrawerContent = props => {
 
       {/* Footer */}
       <View style={styles.footer}>
-        <Text style={styles.footerText}>Disaster Relief Platform</Text>
+        <Text style={styles.footerText}>Disaster Relief Portal</Text>
       </View>
       {/* Custom Alert */}
       <CustomAlert
