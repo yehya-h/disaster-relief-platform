@@ -173,6 +173,7 @@ export default function Home() {
       lineHeight: 22,
       textAlign: 'center',
       opacity: 0.85,
+      paddingBottom: 20
     },
   }); 
 
