@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Alert, ActivityIndicator } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { getCountryNameFromCoords } from '../services/geocoding/geocodingService';
@@ -6,195 +6,196 @@ import { checkAndRequestLocationPermission } from "../services/permissions/locat
 import { LocationService } from '../services/LocationService';
 // import colors from '../constants/colors';
 import { useTheme } from '../hooks/useThem';
+import { useFocusEffect } from '@react-navigation/native';
 
 import Icon from 'react-native-vector-icons/Ionicons';
 
 const LocationPicker = ({ visible, onClose, onLocationSelected, editingLocation }) => {
-    const { colors, isDarkMode } = useTheme();
+  const { colors, isDarkMode } = useTheme();
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.darkestBlueGray,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 50,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.blueGray,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.textColor,
-  },
-  placeholder: {
-    width: 40, // Same width as back button for center alignment
-  },
-  inputSection: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.blueGray,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    height: 56,
-    borderWidth: 1,
-    borderColor: colors.orange,
-  },
-  inputIcon: {
-    marginRight: 12,
-  },
-  input: {
-    flex: 1,
-    color: colors.textColor,
-    fontSize: 16,
-  },
-  mapSection: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-  mapContainer: {
-    flex: 1,
-    borderRadius: 16,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors.orange,
-  },
-  map: {
-    flex: 1,
-  },
-  loaderContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.blueGray,
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: colors.textColor,
-  },
-  locationInfoCard: {
-    backgroundColor: colors.blueGray,
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 16,
-    borderWidth: 1,
-    borderColor: colors.orange,
-  },
-  locationInfoHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  locationInfoTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.textColor,
-    marginLeft: 8,
-  },
-  coordinatesText: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    fontFamily: 'monospace',
-    marginBottom: 4,
-  },
-  addressText: {
-    fontSize: 14,
-    color: colors.textColor,
-    lineHeight: 20,
-  },
-  footer: {
-    padding: 20,
-  },
-  confirmButton: {
-    backgroundColor: colors.orange,
-    borderRadius: 12,
-    height: 56,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: colors.orange,
-    shadowOffset: {
-      width: 0,
-      height: 4,
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.darkestBlueGray,
     },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  confirmButtonDisabled: {
-    backgroundColor: colors.textSecondary,
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-  confirmButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-    marginRight: 8,
-  },
-  buttonIcon: {
-    marginLeft: 4,
-  },
-  // Custom Alert Styles
-  alertOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  alertContainer: {
-    backgroundColor: colors.blueGray,
-    borderRadius: 12,
-    padding: 24,
-    width: '90%',
-    maxWidth: 300,
-    // borderWidth: 1,
-    // borderColor: colors.orange,
-  },
-  alertTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.textColor,
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  alertMessage: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 24,
-  },
-  alertButton: {
-    backgroundColor: colors.orange,
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    alignSelf: 'center',
-  },
-  alertButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingTop: 50,
+      paddingHorizontal: 20,
+      paddingBottom: 20,
+    },
+    backButton: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: colors.blueGray,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    title: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: colors.textColor,
+    },
+    placeholder: {
+      width: 40, // Same width as back button for center alignment
+    },
+    inputSection: {
+      paddingHorizontal: 20,
+      paddingBottom: 20,
+    },
+    inputContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.blueGray,
+      borderRadius: 12,
+      paddingHorizontal: 16,
+      height: 56,
+      borderWidth: 1,
+      borderColor: colors.orange,
+    },
+    inputIcon: {
+      marginRight: 12,
+    },
+    input: {
+      flex: 1,
+      color: colors.textColor,
+      fontSize: 16,
+    },
+    mapSection: {
+      flex: 1,
+      paddingHorizontal: 20,
+    },
+    mapContainer: {
+      flex: 1,
+      borderRadius: 16,
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: colors.orange,
+    },
+    map: {
+      flex: 1,
+    },
+    loaderContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: colors.blueGray,
+    },
+    loadingText: {
+      marginTop: 16,
+      fontSize: 16,
+      color: colors.textColor,
+    },
+    locationInfoCard: {
+      backgroundColor: colors.blueGray,
+      borderRadius: 12,
+      padding: 16,
+      marginTop: 16,
+      borderWidth: 1,
+      borderColor: colors.orange,
+    },
+    locationInfoHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    locationInfoTitle: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: colors.textColor,
+      marginLeft: 8,
+    },
+    coordinatesText: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      fontFamily: 'monospace',
+      marginBottom: 4,
+    },
+    addressText: {
+      fontSize: 14,
+      color: colors.textColor,
+      lineHeight: 20,
+    },
+    footer: {
+      padding: 20,
+    },
+    confirmButton: {
+      backgroundColor: colors.orange,
+      borderRadius: 12,
+      height: 56,
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      shadowColor: colors.orange,
+      shadowOffset: {
+        width: 0,
+        height: 4,
+      },
+      shadowOpacity: 0.3,
+      shadowRadius: 8,
+      elevation: 8,
+    },
+    confirmButtonDisabled: {
+      backgroundColor: colors.textSecondary,
+      shadowOpacity: 0,
+      elevation: 0,
+    },
+    confirmButtonText: {
+      color: '#fff',
+      fontSize: 16,
+      fontWeight: '600',
+      marginRight: 8,
+    },
+    buttonIcon: {
+      marginLeft: 4,
+    },
+    // Custom Alert Styles
+    alertOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.7)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 20,
+    },
+    alertContainer: {
+      backgroundColor: colors.blueGray,
+      borderRadius: 12,
+      padding: 24,
+      width: '90%',
+      maxWidth: 300,
+      // borderWidth: 1,
+      // borderColor: colors.orange,
+    },
+    alertTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: colors.textColor,
+      textAlign: 'center',
+      marginBottom: 16,
+    },
+    alertMessage: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      lineHeight: 20,
+      marginBottom: 24,
+    },
+    alertButton: {
+      backgroundColor: colors.orange,
+      borderRadius: 8,
+      paddingVertical: 12,
+      paddingHorizontal: 24,
+      alignSelf: 'center',
+    },
+    alertButtonText: {
+      color: '#fff',
+      fontSize: 16,
+      fontWeight: '600',
+    },
+  });
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [locationName, setLocationName] = useState('');
   const [address, setAddress] = useState('');
@@ -204,6 +205,18 @@ const styles = StyleSheet.create({
   const [liveLoc, setLiveLoc] = useState(null);
   const [showAlert, setShowAlert] = useState(false);
   const [alertConfig, setAlertConfig] = useState({ title: '', message: '' });
+  const [shouldRenderMap, setShouldRenderMap] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      setShouldRenderMap(true);
+
+      return () => {
+        // Screen is unfocused, cleanup map
+        setShouldRenderMap(false);
+      };
+    }, []),
+  );
 
   const showCustomAlert = (title, message) => {
     setAlertConfig({ title, message });
@@ -354,7 +367,7 @@ const styles = StyleSheet.create({
                 <ActivityIndicator size="large" color={colors.orange} />
                 <Text style={styles.loadingText}>Loading map...</Text>
               </View>
-            ) : (
+            ) : shouldRenderMap && (
               <MapView
                 provider={PROVIDER_GOOGLE}
                 style={styles.map}

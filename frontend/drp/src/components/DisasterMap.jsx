@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import MapView, {
   Marker,
   Circle,
@@ -22,6 +22,7 @@ import { showSuccessToast } from '../utils/toast';
 // import colors from '../constants/colors';
 import { useTheme } from '../hooks/useThem';
 import CustomAlert from './CustomAlert';
+import { useFocusEffect } from '@react-navigation/native';
 
 
 const DisasterMap = React.memo(
@@ -224,6 +225,18 @@ const DisasterMap = React.memo(
     const [showShelterNavigationPrompt, setShowShelterNavigationPrompt] = useState(false);
     const [routeStartPoint, setRouteStartPoint] = useState(null);
     const [routeEndPoint, setRouteEndPoint] = useState(null);
+    const [shouldRenderMap, setShouldRenderMap] = useState(false);
+
+    useFocusEffect(
+      useCallback(() => {
+        setShouldRenderMap(true);
+
+        return () => {
+          // Screen is unfocused, cleanup map
+          setShouldRenderMap(false);
+        };
+      }, []),
+    );
 
     const SHELTER_PROXIMITY_THRESHOLD = 75;
 
@@ -634,313 +647,315 @@ const DisasterMap = React.memo(
     };
 
     return (
-      <View style={styles.container}>
-        <MapView
-          provider={PROVIDER_GOOGLE}
-          ref={mapRef}
-          style={styles.map}
-          initialRegion={{
-            latitude,
-            longitude,
-            latitudeDelta: 0.003,
-            longitudeDelta: 0.003,
-          }}
-          zoomControlEnabled={true}
-          zoomEnabled={true}
-          scrollEnabled={true}
-          onRegionChangeComplete={region => {
-            const zoom = getZoomLevel(region);
-            setZoomLevel(zoom);
-            setMarkerSize(getMarkerSize(zoom));
-            console.log(
-              `Zoom Level: ${zoom}, Marker Size: ${getMarkerSize(zoom)}`,
-            );
-          }
-          }
-        >
-          {/* Shelter Markers */}
-          {shelters
-            .filter(shelter => {
-              const shelterLat = shelter.location.coordinates[1];
-              const shelterLng = shelter.location.coordinates[0];
+      shouldRenderMap && (
+        <View style={styles.container}>
+          <MapView
+            provider={PROVIDER_GOOGLE}
+            ref={mapRef}
+            style={styles.map}
+            initialRegion={{
+              latitude,
+              longitude,
+              latitudeDelta: 0.003,
+              longitudeDelta: 0.003,
+            }}
+            zoomControlEnabled={true}
+            zoomEnabled={true}
+            scrollEnabled={true}
+            onRegionChangeComplete={region => {
+              const zoom = getZoomLevel(region);
+              setZoomLevel(zoom);
+              setMarkerSize(getMarkerSize(zoom));
+              console.log(
+                `Zoom Level: ${zoom}, Marker Size: ${getMarkerSize(zoom)}`,
+              );
+            }
+            }
+          >
+            {/* Shelter Markers */}
+            {shelters
+              .filter(shelter => {
+                const shelterLat = shelter.location.coordinates[1];
+                const shelterLng = shelter.location.coordinates[0];
 
-              // Check if this shelter is within 500m of any incident
-              const isNearAnyIncident = incidents.some(incident => {
-                const incidentLat = incident.location.coordinates[1];
-                const incidentLng = incident.location.coordinates[0];
-                return isWithinDistance(
-                  shelterLat,
-                  shelterLng,
-                  incidentLat,
-                  incidentLng,
-                  500, // 500 meters
-                );
-              });
+                // Check if this shelter is within 500m of any incident
+                const isNearAnyIncident = incidents.some(incident => {
+                  const incidentLat = incident.location.coordinates[1];
+                  const incidentLng = incident.location.coordinates[0];
+                  return isWithinDistance(
+                    shelterLat,
+                    shelterLng,
+                    incidentLat,
+                    incidentLng,
+                    500, // 500 meters
+                  );
+                });
 
-              // Keep shelter only if it's NOT near any incident
-              return !isNearAnyIncident;
-            })
-            .map((shelter, index) => (
+                // Keep shelter only if it's NOT near any incident
+                return !isNearAnyIncident;
+              })
+              .map((shelter, index) => (
+                <Marker
+                  key={`shelter-${index}`}
+                  coordinate={{
+                    latitude: shelter.location.coordinates[1],
+                    longitude: shelter.location.coordinates[0],
+                  }}
+                  anchor={{ x: 0.5, y: 0.5 }}
+                >
+                  <ShelterMarker size={markerSize} />
+                  <Callout>
+                    <View style={styles.calloutContainer}>
+                      <Text style={styles.calloutTitle}>{shelter.title}</Text>
+                      {shelter.capacity && (
+                        <Text style={styles.calloutText}>
+                          Capacity: {shelter.capacity}
+                        </Text>
+                      )}
+                      <Text style={styles.calloutLabel}>Safe Zone</Text>
+                    </View>
+                  </Callout>
+                </Marker>
+              ))}
+
+            {/* Incident Markers */}
+            {incidents.map((incident, index) => {
+              const coords = {
+                latitude: incident.location.coordinates[1],
+                longitude: incident.location.coordinates[0],
+              };
+
+              return (
+                <React.Fragment key={`incident-${index}`}>
+                  <Marker coordinate={coords} anchor={{ x: 0.5, y: 0.5 }}>
+                    <IncidentMarker size={markerSize} />
+                    <Callout>
+                      <View style={styles.calloutContainer}>
+                        <Text style={styles.calloutTitle}>
+                          Emergency Incident
+                        </Text>
+                        <Text style={[styles.calloutText, styles.typeText]}>
+                          Type:{' '}
+                          {types.find(type => type._id === incident.typeId)
+                            ?.name || 'Unknown'}
+                        </Text>
+                        <Text style={styles.calloutText}>
+                          {incident.description}
+                        </Text>
+                        <Text style={[styles.calloutText, styles.severityText]}>
+                          Severity: {incident.severity}
+                        </Text>
+                      </View>
+                    </Callout>
+                  </Marker>
+
+                  {/* Danger zone circle */}
+                  <Circle
+                    center={coords}
+                    radius={500}
+                    strokeWidth={2}
+                    strokeColor="rgba(255,0,0,0.7)"
+                    fillColor="rgba(255,0,0,0.2)"
+                  />
+                </React.Fragment>
+              );
+            })}
+
+            {/* User Locations Markers */}
+            {userLocations.map((location, index) => {
+              const coords = {
+                latitude: location.location.coordinates[1],
+                longitude: location.location.coordinates[0],
+              };
+
+              return (
+                <React.Fragment key={`user-location-${index}`}>
+                  <Marker coordinate={coords} anchor={{ x: 0.5, y: 0.5 }}>
+                    <UserLocMarker size={markerSize} />
+                    <Callout>
+                      <View style={styles.calloutContainer}>
+                        <Text style={styles.calloutTitle}>
+                          {location.location.name || 'User Location'}
+                        </Text>
+                      </View>
+                    </Callout>
+                  </Marker>
+                </React.Fragment>
+              );
+            })}
+
+            {/* Live Location Marker - Now uses currentLocation instead of static lat/lng */}
+            {currentLocation && currentLocation.lat && currentLocation.lng && (
               <Marker
-                key={`shelter-${index}`}
+                key="live-location"
                 coordinate={{
-                  latitude: shelter.location.coordinates[1],
-                  longitude: shelter.location.coordinates[0],
+                  latitude: currentLocation.lat,
+                  longitude: currentLocation.lng
                 }}
                 anchor={{ x: 0.5, y: 0.5 }}
               >
-                <ShelterMarker size={markerSize} />
+                <LiveLocationMarker size={markerSize} />
                 <Callout>
                   <View style={styles.calloutContainer}>
-                    <Text style={styles.calloutTitle}>{shelter.title}</Text>
-                    {shelter.capacity && (
-                      <Text style={styles.calloutText}>
-                        Capacity: {shelter.capacity}
+                    <Text style={styles.calloutTitle}>Your Location</Text>
+                    <Text style={styles.calloutText}>You are here</Text>
+                    {isInHitAreaState && (
+                      <Text style={[styles.calloutText, styles.dangerText]}>
+                        ⚠️ In Danger Zone
                       </Text>
                     )}
-                    <Text style={styles.calloutLabel}>Safe Zone</Text>
                   </View>
                 </Callout>
               </Marker>
-            ))}
+            )}
 
-          {/* Incident Markers */}
-          {incidents.map((incident, index) => {
-            const coords = {
-              latitude: incident.location.coordinates[1],
-              longitude: incident.location.coordinates[0],
-            };
-
-            return (
-              <React.Fragment key={`incident-${index}`}>
-                <Marker coordinate={coords} anchor={{ x: 0.5, y: 0.5 }}>
-                  <IncidentMarker size={markerSize} />
-                  <Callout>
-                    <View style={styles.calloutContainer}>
-                      <Text style={styles.calloutTitle}>
-                        Emergency Incident
-                      </Text>
-                      <Text style={[styles.calloutText, styles.typeText]}>
-                        Type:{' '}
-                        {types.find(type => type._id === incident.typeId)
-                          ?.name || 'Unknown'}
-                      </Text>
-                      <Text style={styles.calloutText}>
-                        {incident.description}
-                      </Text>
-                      <Text style={[styles.calloutText, styles.severityText]}>
-                        Severity: {incident.severity}
-                      </Text>
-                    </View>
-                  </Callout>
-                </Marker>
-
-                {/* Danger zone circle */}
-                <Circle
-                  center={coords}
-                  radius={500}
-                  strokeWidth={2}
-                  strokeColor="rgba(255,0,0,0.7)"
-                  fillColor="rgba(255,0,0,0.2)"
-                />
-              </React.Fragment>
-            );
-          })}
-
-          {/* User Locations Markers */}
-          {userLocations.map((location, index) => {
-            const coords = {
-              latitude: location.location.coordinates[1],
-              longitude: location.location.coordinates[0],
-            };
-
-            return (
-              <React.Fragment key={`user-location-${index}`}>
-                <Marker coordinate={coords} anchor={{ x: 0.5, y: 0.5 }}>
-                  <UserLocMarker size={markerSize} />
-                  <Callout>
-                    <View style={styles.calloutContainer}>
-                      <Text style={styles.calloutTitle}>
-                        {location.location.name || 'User Location'}
-                      </Text>
-                    </View>
-                  </Callout>
-                </Marker>
-              </React.Fragment>
-            );
-          })}
-
-          {/* Live Location Marker - Now uses currentLocation instead of static lat/lng */}
-          {currentLocation && currentLocation.lat && currentLocation.lng && (
-            <Marker
-              key="live-location"
-              coordinate={{
-                latitude: currentLocation.lat,
-                longitude: currentLocation.lng
-              }}
-              anchor={{ x: 0.5, y: 0.5 }}
-            >
-              <LiveLocationMarker size={markerSize} />
-              <Callout>
-                <View style={styles.calloutContainer}>
-                  <Text style={styles.calloutTitle}>Your Location</Text>
-                  <Text style={styles.calloutText}>You are here</Text>
-                  {isInHitAreaState && (
-                    <Text style={[styles.calloutText, styles.dangerText]}>
-                      ⚠️ In Danger Zone
+            {/* Route Start Marker (Red for evacuation, Blue for shelter) */}
+            {routeStartPoint && (
+              <Marker
+                coordinate={{
+                  latitude: routeStartPoint.lat,
+                  longitude: routeStartPoint.lng,
+                }}
+                anchor={{ x: 0.5, y: 0.5 }}
+              >
+                <RouteStartMarker size={markerSize} isEvacuation={!hasExitedHitAreaRef.current} />
+                <Callout>
+                  <View style={styles.calloutContainer}>
+                    <Text style={styles.calloutTitle}>
+                      {!hasExitedHitArea ? 'Evacuation Start' : 'Route Start'}
                     </Text>
-                  )}
-                </View>
-              </Callout>
-            </Marker>
+                    <Text style={styles.calloutText}>
+                      {!hasExitedHitArea
+                        ? 'Follow the red route to safety'
+                        : 'Follow the green route to shelter'
+                      }
+                    </Text>
+                  </View>
+                </Callout>
+              </Marker>
+            )}
+
+            {/* Route End Marker (Green for evacuation, Blue for shelter) */}
+            {routeEndPoint && (
+              <Marker
+                coordinate={{
+                  latitude: routeEndPoint.lat,
+                  longitude: routeEndPoint.lng,
+                }}
+                anchor={{ x: 0.5, y: 0.5 }}
+              >
+                <RouteEndMarker size={markerSize} isEvacuation={!hasExitedHitAreaRef.current} />
+                <Callout>
+                  <View style={styles.calloutContainer}>
+                    <Text style={styles.calloutTitle}>
+                      {!hasExitedHitArea ? 'Safe Zone' : 'Shelter'}
+                    </Text>
+                    <Text style={styles.calloutText}>
+                      {!hasExitedHitArea
+                        ? 'You will be safe here'
+                        : 'Emergency shelter location'
+                      }
+                    </Text>
+                  </View>
+                </Callout>
+              </Marker>
+            )}
+
+            {/* Evacuation Route (Red Polyline) */}
+            {evacRoute && evacRoute.features && evacRoute.features[0] && (
+              <Polyline
+                coordinates={evacRoute.features[0].geometry.coordinates.map(coord => ({
+                  latitude: coord[1],
+                  longitude: coord[0],
+                }))}
+                strokeColor="#00FF00"
+                strokeWidth={4}
+              />
+            )}
+
+            {/* Safe Route to Shelter (Green Polyline) - Show when shelter route exists */}
+            {safeRoute && safeRoute.features && safeRoute.features[0] && (
+              <Polyline
+                coordinates={safeRoute.features[0].geometry.coordinates.map(coord => ({
+                  latitude: coord[1],
+                  longitude: coord[0],
+                }))}
+                strokeColor="#00FF00"
+                strokeWidth={4}
+              />
+            )}
+          </MapView>
+
+          {/* Status Indicator */}
+          {isInHitAreaState && (
+            <View style={styles.statusContainer}>
+              <Text style={styles.statusText}>
+                ⚠️ You are in a danger zone! Follow the red route to evacuate.
+              </Text>
+            </View>
           )}
 
-          {/* Route Start Marker (Red for evacuation, Blue for shelter) */}
-          {routeStartPoint && (
-            <Marker
-              coordinate={{
-                latitude: routeStartPoint.lat,
-                longitude: routeStartPoint.lng,
-              }}
-              anchor={{ x: 0.5, y: 0.5 }}
+          {routing && (
+            <View style={styles.routingContainer}>
+              <Text style={styles.routingText}>Calculating route...</Text>
+            </View>
+          )}
+
+          {showShelterNavigationPrompt && (
+            <Modal
+              visible={showShelterNavigationPrompt}
+              transparent={true}
+              animationType="fade"
+              onRequestClose={() => setShowShelterNavigationPrompt(false)}
             >
-              <RouteStartMarker size={markerSize} isEvacuation={!hasExitedHitAreaRef.current} />
-              <Callout>
-                <View style={styles.calloutContainer}>
-                  <Text style={styles.calloutTitle}>
-                    {!hasExitedHitArea ? 'Evacuation Start' : 'Route Start'}
+              <View style={styles.alertOverlay}>
+                <View style={styles.alertContainer}>
+                  <Text style={styles.alertTitle}>You're Safe!</Text>
+                  <Text style={styles.alertMessage}>
+                    You've successfully evacuated the danger zone! Would you like directions to the nearest emergency shelter?
                   </Text>
-                  <Text style={styles.calloutText}>
-                    {!hasExitedHitArea
-                      ? 'Follow the red route to safety'
-                      : 'Follow the green route to shelter'
-                    }
-                  </Text>
-                </View>
-              </Callout>
-            </Marker>
-          )}
 
-          {/* Route End Marker (Green for evacuation, Blue for shelter) */}
-          {routeEndPoint && (
-            <Marker
-              coordinate={{
-                latitude: routeEndPoint.lat,
-                longitude: routeEndPoint.lng,
-              }}
-              anchor={{ x: 0.5, y: 0.5 }}
-            >
-              <RouteEndMarker size={markerSize} isEvacuation={!hasExitedHitAreaRef.current} />
-              <Callout>
-                <View style={styles.calloutContainer}>
-                  <Text style={styles.calloutTitle}>
-                    {!hasExitedHitArea ? 'Safe Zone' : 'Shelter'}
-                  </Text>
-                  <Text style={styles.calloutText}>
-                    {!hasExitedHitArea
-                      ? 'You will be safe here'
-                      : 'Emergency shelter location'
-                    }
-                  </Text>
-                </View>
-              </Callout>
-            </Marker>
-          )}
-
-          {/* Evacuation Route (Red Polyline) */}
-          {evacRoute && evacRoute.features && evacRoute.features[0] && (
-            <Polyline
-              coordinates={evacRoute.features[0].geometry.coordinates.map(coord => ({
-                latitude: coord[1],
-                longitude: coord[0],
-              }))}
-              strokeColor="#00FF00"
-              strokeWidth={4}
-            />
-          )}
-
-          {/* Safe Route to Shelter (Green Polyline) - Show when shelter route exists */}
-          {safeRoute && safeRoute.features && safeRoute.features[0] && (
-            <Polyline
-              coordinates={safeRoute.features[0].geometry.coordinates.map(coord => ({
-                latitude: coord[1],
-                longitude: coord[0],
-              }))}
-              strokeColor="#00FF00"
-              strokeWidth={4}
-            />
-          )}
-        </MapView>
-
-        {/* Status Indicator */}
-        {isInHitAreaState && (
-          <View style={styles.statusContainer}>
-            <Text style={styles.statusText}>
-              ⚠️ You are in a danger zone! Follow the red route to evacuate.
-            </Text>
-          </View>
-        )}
-
-        {routing && (
-          <View style={styles.routingContainer}>
-            <Text style={styles.routingText}>Calculating route...</Text>
-          </View>
-        )}
-
-        {showShelterNavigationPrompt && (
-          <Modal
-            visible={showShelterNavigationPrompt}
-            transparent={true}
-            animationType="fade"
-            onRequestClose={() => setShowShelterNavigationPrompt(false)}
-          >
-            <View style={styles.alertOverlay}>
-              <View style={styles.alertContainer}>
-                <Text style={styles.alertTitle}>You're Safe!</Text>
-                <Text style={styles.alertMessage}>
-                  You've successfully evacuated the danger zone! Would you like directions to the nearest emergency shelter?
-                </Text>
-
-                <View style={styles.buttonContainer}>
-                  <TouchableOpacity
-                    style={styles.primaryButton}
-                    onPress={async () => {
-                      setShowShelterNavigationPrompt(false);
-                      await getSafeRouteForLocation(currentLocation);
-                    }}
-                  >
-                    <Text style={styles.primaryButtonText}>Yes, Show Route</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.cancelButton}
-                    onPress={() => setShowShelterNavigationPrompt(false)}
-                  >
-                    <Text style={styles.cancelButtonText}>No, Thanks</Text>
-                  </TouchableOpacity>
+                  <View style={styles.buttonContainer}>
+                    <TouchableOpacity
+                      style={styles.primaryButton}
+                      onPress={async () => {
+                        setShowShelterNavigationPrompt(false);
+                        await getSafeRouteForLocation(currentLocation);
+                      }}
+                    >
+                      <Text style={styles.primaryButtonText}>Yes, Show Route</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.cancelButton}
+                      onPress={() => setShowShelterNavigationPrompt(false)}
+                    >
+                      <Text style={styles.cancelButtonText}>No, Thanks</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
               </View>
+            </Modal>
+          )}
+
+          {/* Manual route recalculation button */}
+          {routeCalculated && !routing && (isInHitAreaState || (safeRouteRef.current)) && (
+            <View style={styles.recalculateContainer}>
+              <Text style={styles.recalculateText} onPress={resetRoutes}>
+                Recalculate Route
+              </Text>
             </View>
-          </Modal>
-        )}
+          )}
 
-        {/* Manual route recalculation button */}
-        {routeCalculated && !routing && (isInHitAreaState || (safeRouteRef.current)) && (
-          <View style={styles.recalculateContainer}>
-            <Text style={styles.recalculateText} onPress={resetRoutes}>
-              Recalculate Route
-            </Text>
-          </View>
-        )}
-
-        {/* Custom Alert */}
-        <CustomAlert
-          visible={alertVisible}
-          title={alertData.title}
-          message={alertData.message}
-          buttons={alertData.buttons}
-          onClose={hideCustomAlert}
-        />
-      </View>
+          {/* Custom Alert */}
+          <CustomAlert
+            visible={alertVisible}
+            title={alertData.title}
+            message={alertData.message}
+            buttons={alertData.buttons}
+            onClose={hideCustomAlert}
+          />
+        </View>
+      )
     );
   },
   (prevProps, nextProps) => {

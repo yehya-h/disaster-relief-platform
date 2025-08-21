@@ -1,18 +1,19 @@
 // IncidentMap.tsx
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, StyleSheet, DimensionValue, Text } from 'react-native';
 import MapView, { Marker, Callout, Circle, PROVIDER_GOOGLE } from 'react-native-maps';
 import IncidentMarker from '../../mapComponents/incidentMarker'; // adjust path if needed
 import { useTheme } from '../../hooks/useThem';
+import { useFocusEffect } from '@react-navigation/native';
 
 interface IncidentMapProps {
   latitude: number;
   longitude: number;
   title?: string;
   height?: number;
-  width?: DimensionValue; 
+  width?: DimensionValue;
   markerSize?: number;
-  showDangerZone?: boolean; 
+  showDangerZone?: boolean;
   incident?: {
     typeId?: string;
     description?: string;
@@ -31,6 +32,18 @@ const IncidentMap: React.FC<IncidentMapProps> = ({
   incident = null,
 }) => {
   const { colors } = useTheme();
+  const [shouldRenderMap, setShouldRenderMap] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      setShouldRenderMap(true);
+
+      return () => {
+        // Screen is unfocused, cleanup map
+        setShouldRenderMap(false);
+      };
+    }, []),
+  );
 
   const styles = StyleSheet.create({
     mapCard: {
@@ -80,62 +93,64 @@ const IncidentMap: React.FC<IncidentMapProps> = ({
 
   return (
     <View style={[styles.mapCard, { height, width }]}>
-      <MapView
-        provider={PROVIDER_GOOGLE}
-        style={styles.map}
-        initialRegion={{
-          latitude,
-          longitude,
-          latitudeDelta: 0.009,
-          longitudeDelta: 0.009,
-        }}
-        zoomEnabled
-        scrollEnabled
-      >
-        <Marker
-          coordinate={{ latitude, longitude }}
-          anchor={{ x: 0.5, y: 0.5 }}
+      {shouldRenderMap && (
+        <MapView
+          provider={PROVIDER_GOOGLE}
+          style={styles.map}
+          initialRegion={{
+            latitude,
+            longitude,
+            latitudeDelta: 0.009,
+            longitudeDelta: 0.009,
+          }}
+          zoomEnabled
+          scrollEnabled
         >
-          <IncidentMarker size={markerSize} />
+          <Marker
+            coordinate={{ latitude, longitude }}
+            anchor={{ x: 0.5, y: 0.5 }}
+          >
+            <IncidentMarker size={markerSize} />
 
-          <Callout>
-            <View style={styles.calloutContainer}>
-              <Text style={styles.calloutTitle}>{title}</Text>
+            <Callout>
+              <View style={styles.calloutContainer}>
+                <Text style={styles.calloutTitle}>{title}</Text>
 
-              {/* If an incident object is passed, show same fields as DisasterMap */}
-              {incident?.typeId && (
-                <Text style={[styles.calloutText, styles.typeText]}>
-                  Type: {incident.typeId}
-                </Text>
-              )}
+                {/* If an incident object is passed, show same fields as DisasterMap */}
+                {incident?.typeId && (
+                  <Text style={[styles.calloutText, styles.typeText]}>
+                    Type: {incident.typeId}
+                  </Text>
+                )}
 
-              {incident?.description && (
-                <Text style={styles.calloutText}>{incident.description}</Text>
-              )}
+                {incident?.description && (
+                  <Text style={styles.calloutText}>{incident.description}</Text>
+                )}
 
-              {incident?.severity !== undefined && (
-                <Text style={[styles.calloutText, styles.severityText]}>
-                  Severity: {incident.severity}
-                </Text>
-              )}
+                {incident?.severity !== undefined && (
+                  <Text style={[styles.calloutText, styles.severityText]}>
+                    Severity: {incident.severity}
+                  </Text>
+                )}
 
-              {/* fallback label */}
-              {!incident && <Text style={styles.calloutLabel}>Incident</Text>}
-            </View>
-          </Callout>
-        </Marker>
+                {/* fallback label */}
+                {!incident && <Text style={styles.calloutLabel}>Incident</Text>}
+              </View>
+            </Callout>
+          </Marker>
 
-        {/* Danger zone circle (500m) to match DisasterMap */}
-        {showDangerZone && (
-          <Circle
-            center={{ latitude, longitude }}
-            radius={100}
-            strokeWidth={2}
-            strokeColor="rgba(255,0,0,0.7)"
-            fillColor="rgba(255,0,0,0.2)"
-          />
-        )}
-      </MapView>
+          {/* Danger zone circle (500m) to match DisasterMap */}
+          {showDangerZone && (
+            <Circle
+              center={{ latitude, longitude }}
+              radius={100}
+              strokeWidth={2}
+              strokeColor="rgba(255,0,0,0.7)"
+              fillColor="rgba(255,0,0,0.2)"
+            />
+          )}
+        </MapView>
+      )}
     </View>
   );
 };
