@@ -183,24 +183,26 @@ export default function MapScreen() {
   }, [fetchLocation]); // Include fetchLocation in dependencies
 
   // Fetch Redux data on component mount
-  useEffect(() => {
-    const fetchData = async () => {
-      setDataLoading(true);
-      try {
-        await Promise.all([
-          dispatch(fetchShelters()),
-          dispatch(fetchLatestIncidents()),
-        ]);
-        console.log('Redux data fetch completed');
-      } catch (err) {
-        console.error('Error fetching data:', err);
-      } finally {
-        setDataLoading(false);
-      }
-    };
+  useFocusEffect(
+    useCallback(() => {
+      const fetchData = async () => {
+        setDataLoading(true);
+        try {
+          await Promise.all([
+            dispatch(fetchShelters()),
+            dispatch(fetchLatestIncidents()),
+          ]);
+          console.log('Redux data fetch completed');
+        } catch (err) {
+          console.error('Error fetching data:', err);
+        } finally {
+          setDataLoading(false);
+        }
+      };
 
-    fetchData();
-  }, [dispatch]);
+      fetchData();
+    }, [dispatch])
+  );
 
   // Log data when it changes (for debugging)
   useEffect(() => {

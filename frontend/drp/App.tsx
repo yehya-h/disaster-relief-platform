@@ -18,6 +18,7 @@ import {
 import messaging from '@react-native-firebase/messaging';
 
 import { useTheme } from './src/hooks/useThem'
+import CustomAlert from './src/components/CustomAlert';
 function AppContent() {
 
   const { colors } = useTheme();
@@ -75,6 +76,12 @@ function AppContent() {
   return (
     <View style={[styles.container, { backgroundColor: colors.blueGray }]}>
       <AppNavigator />
+      <CustomAlert
+          visible={alertConfig.visible}
+          title={alertConfig.title}
+          message={alertConfig.message}
+          onClose={hideCustomAlert}
+        />
     </View>
   );
 }

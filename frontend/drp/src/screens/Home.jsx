@@ -290,15 +290,18 @@ export default function Home() {
           if (isInHitArea) {
             const incidents = await getIncident(loc.longitude, loc.latitude);
             if (isActive && Array.isArray(incidents) && incidents.length > 0) {
+              setHitAreas(incidents);
               const types = incidents.map(i => i.typeId?.name).filter(Boolean);
               const tips = incidents.flatMap(i => i.typeId?.safetyTips || []);
               setIncidentTypes([...new Set(types)]);
               setSafetyTips([...new Set(tips)]);
             } else if (isActive) {
+              setHitAreas([]);
               setIncidentTypes([]);
               setSafetyTips(defaultTips);
             }
           } else if (isActive) {
+            setHitAreas([]);
             setIncidentTypes([]);
             setSafetyTips(defaultTips);
           }
