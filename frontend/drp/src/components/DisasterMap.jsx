@@ -524,8 +524,14 @@ const DisasterMap = React.memo(
         return !isNearAnyIncident;
       });
 
-      setRouting(true);
       console.log("filtered", filteredShelters);
+      if (!filteredShelters || filteredShelters.length === 0) {
+        console.log('No safe shelters after filtering.');
+        showCustomAlert('No Safe Shelters', 'No nearby shelters are safe right now.');
+        return;
+      }
+
+      setRouting(true);
       try {
         // Convert incidents to hit areas format
         const hitAreas = incidents.map(incident => ({
@@ -861,7 +867,7 @@ const DisasterMap = React.memo(
               </Marker>
             )}
 
-            {/* Evacuation Route (Red Polyline) */}
+            {/* Evacuation Route (green Polyline) */}
             {evacRoute && evacRoute.features && evacRoute.features[0] && (
               <Polyline
                 coordinates={evacRoute.features[0].geometry.coordinates.map(coord => ({
@@ -890,7 +896,7 @@ const DisasterMap = React.memo(
           {isInHitAreaState && (
             <View style={styles.statusContainer}>
               <Text style={styles.statusText}>
-                ⚠️ You are in a danger zone! Follow the red route to evacuate.
+                ⚠️ You are in a danger zone! Follow the green route to evacuate.
               </Text>
             </View>
           )}
