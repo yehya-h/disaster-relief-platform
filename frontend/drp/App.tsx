@@ -16,6 +16,7 @@ import {
   getFcmToken,
 } from './src/services/fcmService';
 import messaging from '@react-native-firebase/messaging';
+import { I18nManager } from 'react-native';
 
 import { useTheme } from './src/hooks/useThem'
 import CustomAlert from './src/components/CustomAlert';
@@ -71,6 +72,13 @@ function AppContent() {
     });
 
     return unsubscribe;
+  }, []);
+
+  useEffect(()=>{
+    if (I18nManager.isRTL) {
+      I18nManager.forceRTL(false);
+      I18nManager.allowRTL(false);
+    }
   }, []);
 
   return (
